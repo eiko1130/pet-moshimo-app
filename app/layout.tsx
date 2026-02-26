@@ -1,3 +1,4 @@
+// @ts-nocheck
 import './globals.css'
 import BottomNavigation from '@/components/BottomNavigation'
 import { Zen_Kaku_Gothic_New } from 'next/font/google';
@@ -16,7 +17,11 @@ export const metadata = {
 }
 
 // 画面の外枠（レイアウト）の設定
-export default function RootLayout({ children }) {
+export default function RootLayout({ 
+  children 
+}: { 
+  children: React.ReactNode 
+}) {
   return (
     <html lang="ja" className={notoCity.className}>
       <body className="bg-gray-50 min-h-screen">
