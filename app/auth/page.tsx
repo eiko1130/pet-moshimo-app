@@ -13,22 +13,46 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
-  // メール＋パスワードでログイン
-  const handleEmailAuth = async () => {
+  // メール＋パスワードでログイン・登録
+  const handleEmailAuth = async (e) => {
+    // フォーム送信時のページリロードを確実に防止
+    if (e) e.preventDefault()
+    
     setLoading(true)
     setMessage('')
+    
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        // 1. ログイン実行
+        const { data, error } = await supabase.auth.signInWithPassword({ 
+          email: email.trim(), 
+          password: password 
+        })
+        
         if (error) throw error
-        router.push('/')
+
+        if (data?.user) {
+          setMessage('ログイン成功！移動します...')
+          // router.push を使わず、ブラウザの強制移動で Middleware のループを突破する
+          window.location.href = '/'
+        }
       } else {
-        const { error } = await supabase.auth.signUp({ email, password })
+        // 2. 新規登録実行
+        const { error } = await supabase.auth.signUp({ 
+          email: email.trim(), 
+          password: password 
+        })
+        
         if (error) throw error
-        setMessage('確認メールを送りました。メールを確認してください。')
+        
+        // Confirm Emailをオフにしているので、即座にログイン画面へ誘導
+        setMessage('アカウントを作成しました！「ログイン」に切り替えて進んでください。')
+        setIsLogin(true)
       }
     } catch (error: any) {
-      setMessage(error.message)
+      // エラーを詳細に表示
+      setMessage(`${error.message} (Status: ${error.status})`)
+      console.error("Auth Error:", error)
     } finally {
       setLoading(false)
     }
@@ -46,7 +70,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFFBFC] flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-[#FFFBFC] flex flex-col items-center justify-center px-6 text-black">
       
       {/* ロゴ */}
       <div className="mb-6">
@@ -56,11 +80,12 @@ export default function AuthPage() {
       <p className="text-gray-400 text-sm mb-8 tracking-wide">ペットの健康と緊急情報を管理する手帳</p>
 
       {/* カード */}
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-pink-50 p-6">
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-pink-50 p-6 text-black">
         
         {/* タブ切り替え */}
         <div className="flex mb-6 bg-gray-50 rounded-xl p-1">
           <button
+            type="button"
             onClick={() => setIsLogin(true)}
             className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
               isLogin ? 'bg-white text-[#FFB7C5] shadow-sm' : 'text-gray-400'
@@ -69,6 +94,7 @@ export default function AuthPage() {
             ログイン
           </button>
           <button
+            type="button"
             onClick={() => setIsLogin(false)}
             className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
               !isLogin ? 'bg-white text-[#FFB7C5] shadow-sm' : 'text-gray-400'
@@ -78,41 +104,46 @@ export default function AuthPage() {
           </button>
         </div>
 
-        {/* メール入力 */}
-        <div className="mb-3">
-          <input
-            type="email"
-            placeholder="メールアドレス"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-200 bg-gray-50"
-          />
-        </div>
+        {/* 入力フォーム */}
+        <form onSubmit={handleEmailAuth}>
+          <div className="mb-3">
+            <input
+              type="email"
+              placeholder="メールアドレス"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-200 bg-gray-50 text-black placeholder-gray-400"
+              required
+            />
+          </div>
 
-        {/* パスワード入力 */}
-        <div className="mb-4">
-          <input
-            type="password"
-            placeholder="パスワード（6文字以上）"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-200 bg-gray-50"
-          />
-        </div>
+          <div className="mb-4">
+            <input
+              type="password"
+              placeholder="パスワード（6文字以上）"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-200 bg-gray-50 text-black placeholder-gray-400"
+              required
+            />
+          </div>
 
-        {/* メッセージ */}
-        {message && (
-          <p className="text-xs text-center text-pink-400 mb-3">{message}</p>
-        )}
+          {/* メッセージ表示エリア */}
+          {message && (
+            <p className="text-xs text-center text-pink-400 mb-3 font-bold bg-pink-50 py-2 rounded-lg leading-relaxed">
+              {message}
+            </p>
+          )}
 
-        {/* メールログインボタン */}
-        <button
-          onClick={handleEmailAuth}
-          disabled={loading}
-          className="w-full bg-[#FFB7C5] text-white font-bold py-3 rounded-xl text-sm tracking-wide mb-4 disabled:opacity-50"
-        >
-          {loading ? '処理中...' : isLogin ? 'ログイン' : '新規登録'}
-        </button>
+          {/* メインボタン */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#FFB7C5] text-white font-bold py-3 rounded-xl text-sm tracking-wide mb-4 disabled:opacity-50 active:scale-95 transition-transform"
+          >
+            {loading ? '処理中...' : isLogin ? 'ログイン' : '新規登録'}
+          </button>
+        </form>
 
         {/* 区切り線 */}
         <div className="flex items-center gap-3 mb-4">
@@ -123,8 +154,9 @@ export default function AuthPage() {
 
         {/* Googleログインボタン */}
         <button
+          type="button"
           onClick={handleGoogleLogin}
-          className="w-full border border-gray-200 bg-white text-gray-600 font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2"
+          className="w-full border border-gray-200 bg-white text-gray-600 font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

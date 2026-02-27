@@ -4,31 +4,42 @@ import { useState, useEffect } from 'react'
 import Header from '@/components/Header'
 import Link from 'next/link'
 import { PlusIcon } from '@heroicons/react/24/outline'
-import { supabase } from '@/lib/supabase' // クラウド窓口を読み込み
+import { supabase } from '@/lib/supabase'
+import { Pet } from '../types' // app/types.ts がある前提です
 
 export default function PetList() {
-  const [pets, setPets] = useState([])
+  const [pets, setPets] = useState<Pet[]>([])
   const [loading, setLoading] = useState(true)
 
-  // 💡 変更点1：画面が開いた瞬間にSupabase（クラウド）をチェックする
   useEffect(() => {
     async function fetchPets() {
-      const { data, error } = await supabase
-        .from('my_pets')
-        .select('*') // すべての列を取得
-        .order('created_at', { ascending: true }) // 登録順に並べる
+      setLoading(true)
+      try {
+        // 1. ログインしている自分の情報を取得
+        const { data: { user } } = await supabase.auth.getUser()
 
-      if (data && data.length > 0) {
-        setPets(data)
-      } else {
-        // クラウドが空っぽの時だけ、今まで通りダミーを表示
-        setPets([
-          { id: 'd1', name: 'しらす', image_url: '/shirasu.png' },
-          { id: 'd2', name: 'おこめ', image_url: '/okome.png' },
-          { id: 'd3', name: '将軍', image_url: '/shogun.png' },
-        ])
+        if (!user) {
+          setLoading(false)
+          return
+        }
+
+        // 2. 自分の ID と一致するペットだけを取得（ダミーは一切入れない）
+        const { data, error } = await supabase
+          .from('my_pets')
+          .select('*')
+          .eq('user_id', user.id) // 持ち主が自分であること
+          .order('created_at', { ascending: true })
+
+        if (error) throw error
+
+        // 3. データをセット（なければ空の配列 [] が入る）
+        setPets(data || [])
+        
+      } catch (error) {
+        console.error('ペットの取得に失敗しました:', error)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
     fetchPets()
@@ -47,7 +58,6 @@ export default function PetList() {
           {pets.map((pet) => (
             <div key={pet.id} className="flex flex-col items-center group cursor-pointer">
               <div className="w-28 h-28 rounded-full shadow-md border-4 border-white overflow-hidden relative mb-4 bg-[#FFDDE4] group-active:scale-95 transition-all">
-                {/* 💡 変更点2：pet.image ではなく pet.image_url を使う */}
                 {pet.image_url ? (
                   <img
                     src={pet.image_url}
@@ -75,7 +85,21 @@ export default function PetList() {
             </span>
           </Link>
         </div>
-        {loading && <p className="text-center text-[10px] text-gray-300 mt-4">読み込み中...</p>}
+        
+        {loading && (
+          <p className="text-center text-[10px] text-gray-300 mt-8 animate-pulse">
+            うちの子を探しています...
+          </p>
+        )}
+        
+        {!loading && pets.length === 0 && (
+          <div className="mt-8 p-6 border border-dashed border-pink-50 rounded-2xl bg-white/50">
+            <p className="text-center text-[12px] text-gray-400 leading-relaxed">
+             まだペットがいません。<br />
+             登録してください。<br />
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
