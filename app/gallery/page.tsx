@@ -2,7 +2,7 @@
 'use client'
 import Header from '@/components/Header'
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase' // 💡 追加
+import { supabase } from '@/lib/supabase'
 
 export default function GalleryPage() {
   const [photos, setPhotos] = useState([])
@@ -14,21 +14,25 @@ export default function GalleryPage() {
     async function fetchGalleryData() {
       setLoading(true)
       try {
-        // 1. クラウドからペット名簿と記録を同時に取得
+        const { data: { user } } = await supabase.auth.getUser()
+
+        // ログインしていない場合は全てリセット
+        if (!user) {
+          setPets([])
+          setPhotos([])
+          return
+        }
+
         const [petsRes, recordsRes] = await Promise.all([
-          supabase.from('my_pets').select('*'),
-          supabase.from('pet_records').select('*').not('image_url', 'is', null) // 画像がある記録だけ
+          supabase.from('my_pets').select('*').eq('user_id', user.id),
+          supabase.from('pet_records').select('*').eq('user_id', user.id).not('image_url', 'is', null)
         ])
 
         const savedPets = petsRes.data || []
         const savedRecords = recordsRes.data || []
-        
         setPets(savedPets)
 
-        // 2. ギャラリー用にデータを整形
         const galleryItems = []
-
-        // A. 日々の記録からの写真
         savedRecords.forEach(record => {
           const pet = savedPets.find(p => p.id === record.pet_id)
           galleryItems.push({
@@ -40,7 +44,6 @@ export default function GalleryPage() {
           })
         })
 
-        // B. プロフィール写真も思い出として追加
         savedPets.forEach(pet => {
           if (pet.image_url) {
             galleryItems.push({
@@ -53,7 +56,6 @@ export default function GalleryPage() {
           }
         })
 
-        // 新しい順（作成日時順）に並び替え
         galleryItems.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         setPhotos(galleryItems)
 
@@ -63,11 +65,9 @@ export default function GalleryPage() {
         setLoading(false)
       }
     }
-
     fetchGalleryData()
   }, [])
 
-  // 3. フィルタリング処理
   const filteredPhotos = activeTab === 'すべて' 
     ? photos 
     : photos.filter(p => p.petName === activeTab)
@@ -112,21 +112,18 @@ export default function GalleryPage() {
                   </div>
                 </div>
               ))
-            ) : (
-              // 画像がない時のダミー
-              [...Array(9)].map((_, i) => (
-                <div key={i} className="aspect-square bg-white border border-pink-50/20 flex items-center justify-center">
-                  <span className="text-pink-100 text-[10px] opacity-30">🐾</span>
-                </div>
-              ))
-            )}
+            ) : null /* 💡 データがない時は何も（🐾も）出さない */
+            }
           </div>
         )}
         
         {!loading && filteredPhotos.length === 0 && (
-          <p className="text-center text-gray-300 text-xs mt-20 font-bold tracking-widest">
-            NO PHOTOS YET
-          </p>
+          <div className="mt-24 flex flex-col items-center justify-center space-y-2">
+            <span className="text-4xl opacity-20">🎞️</span>
+            <p className="text-center text-gray-300 text-xs font-bold tracking-widest italic">
+              NO PHOTOS YET
+            </p>
+          </div>
         )}
       </div>
     </div>
