@@ -19,9 +19,9 @@ export default function AuthPage() {
     setMessage('')
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-        router.push('/')
+        if (data.session) router.push('/')
       } else {
         const { error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
