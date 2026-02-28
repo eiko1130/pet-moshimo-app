@@ -8,24 +8,10 @@ import BottomNav from '@/components/BottomNav'
 
 const DAILY_TIPS = [
   '今日は少し冷え込みますね。猫ちゃんの寝床を暖かくしてあげましょう。お水もしっかり替えてあげてください。',
-  '猫は1日14〜16時間眠ります。たくさん寝ていても正常ですよ。',
-  'ブラッシングは毛玉予防だけでなく、スキンシップにもなります。',
-  '猫の水分補給は大切。ウェットフードも取り入れてみましょう。',
-  '爪切りは2〜3週間に一度が目安です。嫌がる場合は少しずつ慣らしていきましょう。',
 ]
 
 export default function HomePage() {
   const { user } = useAuth()
-  const [petCount, setPetCount] = useState(0)
-  const tip = DAILY_TIPS[new Date().getDate() % DAILY_TIPS.length]
-
-  useEffect(() => {
-    if (!user) return
-    supabase
-      .from('my_pets')
-      .select('id', { count: 'exact', head: true })
-      .then(({ count }) => setPetCount(count ?? 0))
-  }, [user])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -66,53 +52,49 @@ export default function HomePage() {
           きょうの健康記録
         </Link>
 
-        <Link
-          href="/settings/owner"
-          className="flex items-center justify-between w-full bg-white border border-gray-100 py-4 px-5 rounded-2xl shadow-sm"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-[#FFB7C5]">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+        {/* 3つの丸形ボタン */}
+        <div className="flex justify-around pt-2">
+          <Link href="/pets" className="flex flex-col items-center gap-2">
+            <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </div>
+            <span className="text-xs text-gray-500 font-medium">ペット情報</span>
+          </Link>
+
+          <Link href="/settings/owner" className="flex flex-col items-center gap-2">
+            <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
-            </span>
-            <span className="text-sm font-medium text-gray-700">飼い主情報の編集</span>
-          </div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-gray-300">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-        </Link>
+            </div>
+            <span className="text-xs text-gray-500 font-medium">飼い主情報</span>
+          </Link>
 
-        <Link
-          href="/settings/contacts"
-          className="flex items-center justify-between w-full bg-white border border-gray-100 py-4 px-5 rounded-2xl shadow-sm"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-[#FFB7C5]">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                <line x1="8" y1="21" x2="16" y2="21"/>
-                <line x1="12" y1="17" x2="12" y2="21"/>
+          <Link href="/settings/contacts" className="flex flex-col items-center gap-2">
+            <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
               </svg>
-            </span>
-            <span className="text-sm font-medium text-gray-700">緊急連絡先の編集</span>
-          </div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-gray-300">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-        </Link>
+            </div>
+            <span className="text-xs text-gray-500 font-medium">緊急連絡先</span>
+          </Link>
+        </div>
       </div>
 
-      {/* 今日のアドバイス */}
-      <div className="mx-5 mt-5 bg-white border border-yellow-100 rounded-2xl p-4">
+      {/* アプリ説明 */}
+      <div className="mx-5 mt-6 bg-white border border-pink-50 rounded-2xl p-4">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-yellow-400">💡</span>
-          <span className="text-sm font-bold text-gray-600">今日のアドバイス</span>
+          <span className="text-pink-300">🐾</span>
+          <span className="text-sm font-bold text-gray-500">このアプリについて</span>
         </div>
-        <p className="text-xs text-gray-500 leading-relaxed">{tip}</p>
+        <p className="text-xs text-gray-400 leading-relaxed">
+          このアプリは、飼い主に万が一のことがあった際にペットを守るための備えです。日々の健康記録を続けることで、もしも24時間以内に生存確認が取れなかった場合、あらかじめ登録した代理人へ自動的に情報が共有される仕組みを目指しています。大切なペットのために、今日から記録を始めましょう。
+        </p>
       </div>
 
       <BottomNav />
