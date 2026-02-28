@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🐈 猫のもしも手帳 - セットアップ手順
 
-## Getting Started
+## ファイル構成
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun run dev
+```
+/
+├── app/
+│   ├── auth/page.tsx          # ログイン・新規登録
+│   ├── page.tsx               # ホーム
+│   ├── record/page.tsx        # 見守り記録
+│   ├── calendar/page.tsx      # カレンダー
+│   ├── gallery/page.tsx       # 思い出フォト
+│   ├── pets/page.tsx          # うちの子リスト
+│   ├── pets/new/page.tsx      # ペット追加
+│   ├── settings/owner/page.tsx     # 飼い主情報編集
+│   ├── settings/contacts/page.tsx  # 緊急連絡先編集
+│   ├── layout.tsx
+│   └── globals.css
+├── components/
+│   ├── AuthProvider.tsx
+│   └── BottomNav.tsx
+├── lib/
+│   └── supabase.ts
+├── types/
+│   └── index.ts
+├── middleware.ts
+└── supabase-init.sql  ← Supabaseで実行するSQL
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## セットアップ手順
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. Supabaseの設定
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+1. Supabase SQL Editorを開く
+2. `supabase-init.sql` の内容をコピー＆ペーストして実行
+3. Storageで `pet-photos` という名前のバケットを作成（publicにする）
 
-## Learn More
+### 2. 環境変数の設定
 
-To learn more about Next.js, take a look at the following resources:
+`.env.local.example` をコピーして `.env.local` を作成し、値を入力：
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+NEXT_PUBLIC_SUPABASE_URL=https://あなたのプロジェクトID.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...あなたのanonキー
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+### 3. ローカル起動
 
-## Deploy on Vercel
+```bash
+npm install
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 4. Vercelデプロイ
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+1. GitHubにプッシュ
+2. VercelでプロジェクトのSettings → Environment Variables に上記2つを追加
+3. Redeploy
+
+### 5. Supabase URL Configuration
+
+Authentication → URL Configuration で：
+- Site URL: `https://あなたのvercelドメイン.vercel.app`
+- Redirect URLs: `https://あなたのvercelドメイン.vercel.app/**`
+
+## 画像ファイル（publicフォルダに置く）
+
+- `logo.png` - ロゴ画像
+- `main.png` - ホーム画面の猫イラスト

@@ -2,47 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --primary-pink: #FF9A93; /* Figmaでよく使われる柔らかいベビーピンク */
-  --bg-cream: #FFF9F6;    /* 真っ白より少し温かみのある背景色 */
-  --text-main: #4A4A4A;   /* きつい黒を避けたチャコールグレー */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
-@layer base {
-  body {
-    letter-spacing: 0.03em; 
-    line-height: 1.3;
-    @apply text-gray-700 bg-[#FFFBFC];
-    
-  }
-}
-
-@layer components {
-  /* Figma風：カード。線は細く、影は極薄く */
-  .card {
-    @apply bg-white rounded-[24px] p-6 border border-pink-50/50 shadow-sm;
-  }
-  
-  /* Figma風：メインボタン。グラデなし、マットな質感 */
-  .btn-primary {
-    @apply bg-[#FF9A93] text-white rounded-full py-4 px-8 font-bold text-lg 
-           active:scale-95 transition-all shadow-none flex items-center justify-center;
-  }
-  
-  /* Figma風：サブボタンやリンク */
-  .btn-secondary {
-    @apply bg-white text-[#FFB7C5] border-2 border-[#FFB7C5] rounded-full py-4 px-8 font-bold;
-  }
-
-  /* Figma風：入力フォーム。角を丸めすぎず、線は淡く */
-  .input-field {
-    @apply w-full px-5 py-4 bg-white border border-gray-200 rounded-[16px] 
-           focus:outline-none focus:border-[#FFB7C5] focus:ring-1 focus:ring-[#FFB7C5] 
-           placeholder:text-gray-300 transition-all;
-  }
-
-  /* ペットアイコンなどの丸い枠 */
-  .avatar-circle {
-    @apply bg-white rounded-full border-4 border-white shadow-md flex items-center justify-center overflow-hidden;
-  }
+body {
+  font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
 }

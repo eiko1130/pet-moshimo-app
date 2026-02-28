@@ -1,6 +1,5 @@
-// @ts-nocheck
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -13,52 +12,58 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
-  // メール＋パスワードでログイン
+  // ログイン済みならトップへ
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) router.replace('/')
+    })
+  }, [router])
+
   const handleEmailAuth = async () => {
+    if (!email || !password) {
+      setMessage('メールアドレスとパスワードを入力してください')
+      return
+    }
     setLoading(true)
     setMessage('')
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-        router.push('/')
+        if (data.session) {
+          router.replace('/')
+          router.refresh()
+        }
       } else {
         const { error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
         setMessage('確認メールを送りました。メールを確認してください。')
       }
     } catch (error: any) {
-      setMessage(error.message)
+      setMessage(error.message === 'Invalid login credentials'
+        ? 'メールアドレスまたはパスワードが正しくありません'
+        : error.message)
     } finally {
       setLoading(false)
     }
   }
 
-  // Googleでログイン
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
+      options: { redirectTo: `${window.location.origin}/` },
     })
     if (error) setMessage(error.message)
   }
 
   return (
     <div className="min-h-screen bg-[#FFFBFC] flex flex-col items-center justify-center px-6">
-      
-      {/* ロゴ */}
       <div className="mb-6">
         <Image src="/logo.png" alt="もしも手帳" width={240} height={48} priority />
       </div>
-
       <p className="text-gray-400 text-sm mb-8 tracking-wide">ペットの健康と緊急情報を管理する手帳</p>
 
-      {/* カード */}
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-pink-50 p-6">
-        
-        {/* タブ切り替え */}
         <div className="flex mb-6 bg-gray-50 rounded-xl p-1">
           <button
             onClick={() => setIsLogin(true)}
@@ -78,50 +83,47 @@ export default function AuthPage() {
           </button>
         </div>
 
-        {/* メール入力 */}
         <div className="mb-3">
           <input
             type="email"
             placeholder="メールアドレス"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleEmailAuth()}
             className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-200 bg-gray-50"
           />
         </div>
-
-        {/* パスワード入力 */}
         <div className="mb-4">
           <input
             type="password"
             placeholder="パスワード（6文字以上）"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleEmailAuth()}
             className="w-full border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-200 bg-gray-50"
           />
         </div>
 
-        {/* メッセージ */}
         {message && (
-          <p className="text-xs text-center text-pink-400 mb-3">{message}</p>
+          <p className={`text-xs text-center mb-3 ${message.includes('送りました') ? 'text-green-500' : 'text-pink-400'}`}>
+            {message}
+          </p>
         )}
 
-        {/* メールログインボタン */}
         <button
           onClick={handleEmailAuth}
           disabled={loading}
-          className="w-full bg-[#FFB7C5] text-white font-bold py-3 rounded-xl text-sm tracking-wide mb-4 disabled:opacity-50"
+          className="w-full bg-[#FFB7C5] text-white font-bold py-3 rounded-xl text-sm tracking-wide mb-4 disabled:opacity-50 transition-opacity"
         >
           {loading ? '処理中...' : isLogin ? 'ログイン' : '新規登録'}
         </button>
 
-        {/* 区切り線 */}
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-gray-100" />
           <span className="text-xs text-gray-300">または</span>
           <div className="flex-1 h-px bg-gray-100" />
         </div>
 
-        {/* Googleログインボタン */}
         <button
           onClick={handleGoogleLogin}
           className="w-full border border-gray-200 bg-white text-gray-600 font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2"
