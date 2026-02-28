@@ -12,7 +12,7 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
@@ -27,12 +27,10 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // /auth ページ: ログイン済みなら / へ
   if (pathname.startsWith('/auth') && user) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // 保護ページ: 未ログインなら /auth へ
   const protectedPaths = ['/', '/record', '/calendar', '/gallery', '/pets', '/settings']
   const isProtected = protectedPaths.some(p => pathname === p || pathname.startsWith(p + '/'))
   if (isProtected && !user) {
