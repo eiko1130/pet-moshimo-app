@@ -48,7 +48,6 @@ export default function RecordPage() {
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
   const [date, setDate] = useState(toLocalDateString())
   const [mood, setMood] = useState<'good' | 'normal' | 'bad' | null>(null)
-  const [content, setContent] = useState('')
   const [memo, setMemo] = useState('')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -93,16 +92,14 @@ export default function RecordPage() {
       const { error } = await supabase.from('pet_records').insert({
         user_id: user.id,
         pet_id: selectedPet.id,
-        type: 'daily',
         mood,
-        content: content || null,
+        memo: memo || null,
         image_url,
         date,
       })
       if (error) throw error
       setMessage('記録しました！')
       setMood(null)
-      setContent('')
       setMemo('')
       setPhotoFile(null)
       setPhotoPreview(null)
@@ -196,31 +193,19 @@ export default function RecordPage() {
           </div>
         </div>
 
-        {/* ペットの様子 */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <label className="text-sm font-bold text-gray-600 block mb-2">ペットの様子</label>
-          <input
-            type="text"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="例：食欲旺盛、よく寝ている"
-            className="w-full text-sm bg-gray-50 rounded-xl px-3 py-3 focus:outline-none focus:ring-1 focus:ring-pink-200"
-          />
-        </div>
-
         {/* メモ */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <label className="text-sm font-bold text-gray-600 block mb-2">メモ</label>
           <textarea
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
-            placeholder="気づいたことや気になること"
-            rows={3}
+            placeholder="今日の様子、気づいたことなど"
+            rows={4}
             className="w-full text-sm bg-gray-50 rounded-xl px-3 py-3 focus:outline-none focus:ring-1 focus:ring-pink-200 resize-none"
           />
         </div>
 
-        {/* 写真（一番下） */}
+        {/* 写真 */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <label className="text-sm font-bold text-gray-600 block mb-2">今日の写真</label>
           <label className="cursor-pointer block">
