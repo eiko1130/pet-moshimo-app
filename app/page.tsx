@@ -1,17 +1,14 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import BottomNav from '@/components/BottomNav'
 
-const DAILY_TIPS = [
-  '今日は少し冷え込みますね。猫ちゃんの寝床を暖かくしてあげましょう。お水もしっかり替えてあげてください。',
-]
-
 export default function HomePage() {
   const { user } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -22,26 +19,46 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#FFFBFC] pb-24">
       {/* ヘッダー */}
       <header className="flex items-center justify-between px-5 pt-5 pb-2">
-        <button className="text-gray-400">
+        <button onClick={() => setMenuOpen(!menuOpen)} className="text-gray-400">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
             <line x1="3" y1="6" x2="21" y2="6"/>
             <line x1="3" y1="12" x2="21" y2="12"/>
             <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
         </button>
-        <button onClick={handleSignOut} className="text-xs text-gray-400 border border-gray-200 rounded-lg px-3 py-1">
-          ログアウト
-        </button>
       </header>
+
+      {/* ドロワーメニュー */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-50" onClick={() => setMenuOpen(false)}>
+          <div className="absolute top-0 left-0 w-64 h-full bg-white shadow-lg p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-8">
+              <span className="font-bold text-gray-600">メニュー</span>
+              <button onClick={() => setMenuOpen(false)} className="text-gray-400">✕</button>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-3 text-gray-500 text-sm w-full py-3 border-t border-gray-100"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              ログアウト
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ロゴ・メインビジュアル */}
       <div className="flex flex-col items-center py-4">
-        <Image src="/logo.png" alt="もしも手帳" width={200} height={40} priority className="mb-4" />
-        <Image src="/main.png" alt="猫" width={180} height={180} className="object-contain" />
+        <Image src="/logo.png" alt="もしも手帳" width={240} height={48} priority className="mb-4" />
+        <Image src="/main.png" alt="猫" width={220} height={220} className="object-contain" />
       </div>
 
       {/* メインボタン */}
-      <div className="px-5 space-y-3">
+      <div className="px-10 space-y-3">
         <Link
           href="/record"
           className="flex items-center justify-center gap-2 w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base shadow-sm"
@@ -86,14 +103,14 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* アプリ説明 */}
-      <div className="mx-5 mt-6 bg-white border border-pink-50 rounded-2xl p-4">
+      {/* このアプリについて */}
+      <div className="mx-10 mt-6 bg-white border border-pink-50 rounded-2xl p-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-pink-300">🐾</span>
           <span className="text-sm font-bold text-gray-500">このアプリについて</span>
         </div>
         <p className="text-xs text-gray-400 leading-relaxed">
-          このアプリは、飼い主に万が一のことがあった際にペットを守るための備えです。日々の健康記録を続けることで、もしも24時間以内に生存確認が取れなかった場合、あらかじめ登録した代理人へ自動的に情報が共有される仕組みを目指しています。大切なペットのために、今日から記録を始めましょう。
+          飼い主に万が一のことがあった際、登録した代理人へペットの情報が共有される仕組みです。毎日の記録が、大切なペットを守ります。
         </p>
       </div>
 
