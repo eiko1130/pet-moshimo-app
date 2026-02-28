@@ -138,8 +138,8 @@ export default function RecordPage() {
               <div className={`w-14 h-14 rounded-full overflow-hidden border-4 transition-all ${
                 selectedPet?.id === pet.id ? 'border-[#FFB7C5]' : 'border-gray-100'
               }`}>
-                {pet.photo_url ? (
-                  <img src={pet.photo_url} alt={pet.name} className="w-full h-full object-cover" />
+                {pet.image_url ? (
+                  <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-pink-50 flex items-center justify-center text-xl">🐱</div>
                 )}
