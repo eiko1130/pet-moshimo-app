@@ -7,17 +7,46 @@ import BottomNav from '@/components/BottomNav'
 import type { Pet } from '@/types'
 
 const MOODS = [
-  { value: 'good', label: '良い', emoji: '😊' },
-  { value: 'normal', label: 'ふつう', emoji: '😐' },
-  { value: 'bad', label: '悪い', emoji: '😟' },
+  { value: 'good', label: '良い', icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-7 h-7">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+      <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
+      <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
+    </svg>
+  )},
+  { value: 'normal', label: 'ふつう', icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-7 h-7">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="8" y1="15" x2="16" y2="15"/>
+      <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
+      <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
+    </svg>
+  )},
+  { value: 'bad', label: '悪い', icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-7 h-7">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M16 16s-1.5-2-4-2-4 2-4 2"/>
+      <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
+      <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
+    </svg>
+  )},
 ]
+
+const toLocalDateString = () => {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
 
 export default function RecordPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [pets, setPets] = useState<Pet[]>([])
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState(toLocalDateString())
   const [mood, setMood] = useState<'good' | 'normal' | 'bad' | null>(null)
   const [content, setContent] = useState('')
   const [memo, setMemo] = useState('')
@@ -99,27 +128,31 @@ export default function RecordPage() {
 
       {/* ペット選択 */}
       {pets.length > 1 && (
-        <div className="flex gap-2 px-5 mt-3 overflow-x-auto">
+        <div className="flex gap-3 px-5 mt-3 overflow-x-auto">
           {pets.map(pet => (
             <button
               key={pet.id}
               onClick={() => setSelectedPet(pet)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm whitespace-nowrap border transition-all ${
-                selectedPet?.id === pet.id
-                  ? 'bg-[#FFB7C5] text-white border-[#FFB7C5]'
-                  : 'bg-white text-gray-500 border-gray-200'
-              }`}
+              className="flex flex-col items-center gap-1 shrink-0"
             >
-              {pet.photo_url ? (
-                <img src={pet.photo_url} alt={pet.name} className="w-6 h-6 rounded-full object-cover" />
-              ) : '🐱'}
-              {pet.name}
+              <div className={`w-14 h-14 rounded-full overflow-hidden border-4 transition-all ${
+                selectedPet?.id === pet.id ? 'border-[#FFB7C5]' : 'border-gray-100'
+              }`}>
+                {pet.photo_url ? (
+                  <img src={pet.photo_url} alt={pet.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-pink-50 flex items-center justify-center text-xl">🐱</div>
+                )}
+              </div>
+              <span className={`text-xs font-medium ${selectedPet?.id === pet.id ? 'text-[#FFB7C5]' : 'text-gray-400'}`}>
+                {pet.name}
+              </span>
             </button>
           ))}
         </div>
       )}
 
-      <div className="px-5 py-4 space-y-5">
+      <div className="px-5 py-4 space-y-4">
         {/* 日付 */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <label className="text-sm font-bold text-gray-600 block mb-2">記録する日</label>
@@ -153,33 +186,14 @@ export default function RecordPage() {
                 className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border-2 transition-all ${
                   mood === m.value
                     ? 'bg-[#FFB7C5] border-[#FFB7C5] text-white'
-                    : 'bg-white border-gray-100 text-gray-500'
+                    : 'bg-white border-gray-100 text-gray-400'
                 }`}
               >
-                <span className="text-2xl">{m.emoji}</span>
+                {m.icon}
                 <span className="text-xs font-medium">{m.label}</span>
               </button>
             ))}
           </div>
-        </div>
-
-        {/* 写真 */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <label className="text-sm font-bold text-gray-600 block mb-2">今日の写真</label>
-          <label className="cursor-pointer block">
-            {photoPreview ? (
-              <img src={photoPreview} alt="preview" className="w-full h-40 object-cover rounded-xl" />
-            ) : (
-              <div className="border-2 border-dashed border-gray-200 rounded-xl h-28 flex flex-col items-center justify-center text-gray-400 text-sm gap-2">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                  <circle cx="12" cy="13" r="4"/>
-                </svg>
-                画像を選択...
-              </div>
-            )}
-            <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-          </label>
         </div>
 
         {/* ペットの様子 */}
@@ -204,6 +218,25 @@ export default function RecordPage() {
             rows={3}
             className="w-full text-sm bg-gray-50 rounded-xl px-3 py-3 focus:outline-none focus:ring-1 focus:ring-pink-200 resize-none"
           />
+        </div>
+
+        {/* 写真（一番下） */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-4">
+          <label className="text-sm font-bold text-gray-600 block mb-2">今日の写真</label>
+          <label className="cursor-pointer block">
+            {photoPreview ? (
+              <img src={photoPreview} alt="preview" className="w-full h-40 object-cover rounded-xl" />
+            ) : (
+              <div className="border-2 border-dashed border-gray-200 rounded-xl h-28 flex flex-col items-center justify-center text-gray-400 text-sm gap-2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                画像を選択...
+              </div>
+            )}
+            <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+          </label>
         </div>
 
         {message && (
