@@ -14,9 +14,8 @@ export type PetRecord = {
   id: string
   user_id: string
   pet_id: string
-  type: 'medical' | 'daily' | 'memory'
   mood: 'good' | 'normal' | 'bad' | null
-  content: string | null
+  memo: string | null
   image_url: string | null
   extra_pet_ids: string[] | null
   date: string
