@@ -17,8 +17,6 @@ export default function MoshimoInfoPage() {
     key_location: '',
     hospital_name: '',
     hospital_phone: '',
-    vaccine_info: '',
-    insurance_info: '',
     message: '',
     proxy_name: '',
     proxy_phone: '',
@@ -39,8 +37,6 @@ export default function MoshimoInfoPage() {
           key_location: data.key_location ?? '',
           hospital_name: data.hospital_name ?? '',
           hospital_phone: data.hospital_phone ?? '',
-          vaccine_info: data.vaccine_info ?? '',
-          insurance_info: data.insurance_info ?? '',
           message: data.message ?? '',
           proxy_name: data.proxy_name ?? '',
           proxy_phone: data.proxy_phone ?? '',
@@ -146,8 +142,6 @@ export default function MoshimoInfoPage() {
             {[
               { label: 'かかりつけ医', key: 'hospital_name', placeholder: 'にじいろ動物病院' },
               { label: 'かかりつけ医の電話番号', key: 'hospital_phone', placeholder: '03-1234-5678' },
-              { label: 'ワクチン情報', key: 'vaccine_info', placeholder: '混合ワクチン 2024年3月接種済み' },
-              { label: '保険情報', key: 'insurance_info', placeholder: 'ペット保険 証券番号: ...' },
             ].map(item => (
               <div key={item.key} className="px-4 py-3">
                 <label className="text-xs text-gray-400 block mb-1">{item.label}</label>
