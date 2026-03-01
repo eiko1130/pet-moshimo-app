@@ -237,10 +237,10 @@ export default function RecordPage() {
             <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
           </label>
 
-          {/* 一緒にいる子の選択（写真がある場合のみ・他にペットがいる場合のみ） */}
-          {photoPreview && otherPets.length > 0 && (
-            <div className="mt-3">
-              <p className="text-xs text-gray-400 mb-2">一緒に載っている子は？</p>
+          {/* 他の子タグ（常に表示・ペットが2匹以上の場合） */}
+          {otherPets.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <p className="text-xs text-gray-400 mb-2">📷 写真に他の子も写ってますか？</p>
               <div className="flex gap-2 flex-wrap">
                 {otherPets.map(pet => (
                   <button
