@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import BottomNav from '@/components/BottomNav'
 import Link from 'next/link'
-import type { PetRecord } from '@/types'
+import type { Pet, PetRecord } from '@/types'
 
 type GroupedPhotos = {
   yearMonth: string
@@ -15,36 +15,51 @@ type GroupedPhotos = {
 
 export default function GalleryPage() {
   const { user } = useAuth()
+  const [pets, setPets] = useState<Pet[]>([])
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(null)
+  const [allRecords, setAllRecords] = useState<PetRecord[]>([])
   const [groups, setGroups] = useState<GroupedPhotos[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!user) return
+    // ペット一覧取得
+    supabase.from('my_pets').select('*').order('created_at').then(({ data }) => {
+      setPets(data ?? [])
+    })
+    // 画像のあるレコード全件取得
     supabase
       .from('pet_records')
       .select('*')
       .not('image_url', 'is', null)
       .order('date', { ascending: false })
       .then(({ data }) => {
-        const map: Record<string, PetRecord[]> = {}
-        ;(data ?? []).forEach(r => {
-          const ym = r.date.slice(0, 7)
-          if (!map[ym]) map[ym] = []
-          map[ym].push(r)
-        })
-        const result = Object.entries(map).map(([ym, photos]) => {
-          const [y, m] = ym.split('-')
-          return {
-            yearMonth: ym,
-            label: `${y}年 ${parseInt(m)}月`,
-            count: photos.length,
-            photos,
-          }
-        })
-        setGroups(result)
+        setAllRecords(data ?? [])
         setLoading(false)
       })
   }, [user])
+
+  // 絞り込み＆グループ化
+  useEffect(() => {
+    let filtered = allRecords
+    if (selectedPetId) {
+      filtered = allRecords.filter(r =>
+        r.pet_id === selectedPetId ||
+        (r.extra_pet_ids && r.extra_pet_ids.includes(selectedPetId))
+      )
+    }
+    const map: Record<string, PetRecord[]> = {}
+    filtered.forEach(r => {
+      const ym = r.date.slice(0, 7)
+      if (!map[ym]) map[ym] = []
+      map[ym].push(r)
+    })
+    const result = Object.entries(map).map(([ym, photos]) => {
+      const [y, m] = ym.split('-')
+      return { yearMonth: ym, label: `${y}年 ${parseInt(m)}月`, count: photos.length, photos }
+    })
+    setGroups(result)
+  }, [allRecords, selectedPetId])
 
   return (
     <div className="min-h-screen bg-[#FFFBFC] pb-24">
@@ -55,17 +70,40 @@ export default function GalleryPage() {
           </svg>
         </Link>
         <span className="text-lg font-bold text-gray-700">思い出フォト</span>
-        <button className="text-gray-400">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
-            <line x1="8" y1="6" x2="21" y2="6"/>
-            <line x1="8" y1="12" x2="21" y2="12"/>
-            <line x1="8" y1="18" x2="21" y2="18"/>
-            <line x1="3" y1="6" x2="3.01" y2="6"/>
-            <line x1="3" y1="12" x2="3.01" y2="12"/>
-            <line x1="3" y1="18" x2="3.01" y2="18"/>
-          </svg>
-        </button>
+        <div className="w-6" />
       </header>
+
+      {/* ペット絞り込みボタン（2匹以上の場合のみ） */}
+      {pets.length > 1 && (
+        <div className="flex gap-2 px-4 py-3 overflow-x-auto">
+          <button
+            onClick={() => setSelectedPetId(null)}
+            className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap ${
+              selectedPetId === null
+                ? 'bg-[#FFB7C5] border-[#FFB7C5] text-white'
+                : 'bg-white border-gray-200 text-gray-500'
+            }`}
+          >
+            すべて
+          </button>
+          {pets.map(pet => (
+            <button
+              key={pet.id}
+              onClick={() => setSelectedPetId(pet.id)}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap ${
+                selectedPetId === pet.id
+                  ? 'bg-[#FFB7C5] border-[#FFB7C5] text-white'
+                  : 'bg-white border-gray-200 text-gray-500'
+              }`}
+            >
+              {pet.image_url ? (
+                <img src={pet.image_url} alt={pet.name} className="w-5 h-5 rounded-full object-cover" />
+              ) : '🐱'}
+              {pet.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center mt-10">
@@ -89,23 +127,12 @@ export default function GalleryPage() {
               <div className="grid grid-cols-3 gap-1">
                 {group.photos.map(photo => (
                   <div key={photo.id} className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-                    <img
-                      src={photo.image_url!}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={photo.image_url!} alt="" className="w-full h-full object-cover" />
                   </div>
                 ))}
               </div>
             </div>
           ))}
-
-          <div className="text-center py-6 text-xs text-gray-400 space-y-3">
-            <p>これより前の写真はまだありません。<br/>毎日の健康記録から写真を登録しましょう。</p>
-            <Link href="/record" className="inline-flex items-center gap-2 border border-[#FFB7C5] text-[#FFB7C5] px-4 py-2 rounded-full text-sm font-medium">
-              📷 写真を撮る
-            </Link>
-          </div>
         </div>
       )}
 

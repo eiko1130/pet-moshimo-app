@@ -46,6 +46,7 @@ export default function RecordPage() {
   const router = useRouter()
   const [pets, setPets] = useState<Pet[]>([])
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
+  const [extraPetIds, setExtraPetIds] = useState<string[]>([])
   const [date, setDate] = useState(toLocalDateString())
   const [mood, setMood] = useState<'good' | 'normal' | 'bad' | null>(null)
   const [memo, setMemo] = useState('')
@@ -61,6 +62,12 @@ export default function RecordPage() {
       if (data && data.length > 0) setSelectedPet(data[0])
     })
   }, [user])
+
+  const toggleExtraPet = (id: string) => {
+    setExtraPetIds(prev =>
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    )
+  }
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -96,6 +103,7 @@ export default function RecordPage() {
         memo: memo || null,
         image_url,
         date,
+        extra_pet_ids: extraPetIds.length > 0 ? extraPetIds : null,
       })
       if (error) throw error
       setMessage('記録しました！')
@@ -103,6 +111,7 @@ export default function RecordPage() {
       setMemo('')
       setPhotoFile(null)
       setPhotoPreview(null)
+      setExtraPetIds([])
       setTimeout(() => router.push('/'), 1000)
     } catch (e: any) {
       setMessage(e.message)
@@ -110,6 +119,8 @@ export default function RecordPage() {
       setLoading(false)
     }
   }
+
+  const otherPets = pets.filter(p => p.id !== selectedPet?.id)
 
   return (
     <div className="min-h-screen bg-[#FFFBFC] pb-24">
@@ -129,7 +140,10 @@ export default function RecordPage() {
           {pets.map(pet => (
             <button
               key={pet.id}
-              onClick={() => setSelectedPet(pet)}
+              onClick={() => {
+                setSelectedPet(pet)
+                setExtraPetIds(prev => prev.filter(id => id !== pet.id))
+              }}
               className="flex flex-col items-center gap-1 shrink-0"
             >
               <div className={`w-14 h-14 rounded-full overflow-hidden border-4 transition-all ${
@@ -222,6 +236,31 @@ export default function RecordPage() {
             )}
             <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
           </label>
+
+          {/* 一緒にいる子の選択（写真がある場合のみ・他にペットがいる場合のみ） */}
+          {photoPreview && otherPets.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs text-gray-400 mb-2">一緒に載っている子は？</p>
+              <div className="flex gap-2 flex-wrap">
+                {otherPets.map(pet => (
+                  <button
+                    key={pet.id}
+                    onClick={() => toggleExtraPet(pet.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
+                      extraPetIds.includes(pet.id)
+                        ? 'bg-[#FFB7C5] border-[#FFB7C5] text-white'
+                        : 'bg-white border-gray-200 text-gray-500'
+                    }`}
+                  >
+                    {pet.image_url ? (
+                      <img src={pet.image_url} alt={pet.name} className="w-5 h-5 rounded-full object-cover" />
+                    ) : '🐱'}
+                    {pet.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {message && (

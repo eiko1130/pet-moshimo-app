@@ -18,6 +18,7 @@ export type PetRecord = {
   mood: 'good' | 'normal' | 'bad' | null
   content: string | null
   image_url: string | null
+  extra_pet_ids: string[] | null
   date: string
   created_at: string
   pet?: Pet
