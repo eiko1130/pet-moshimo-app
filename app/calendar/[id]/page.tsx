@@ -8,24 +8,21 @@ import type { Pet, PetRecord } from '@/types'
 const MOODS = [
   { value: 'good', label: '良い', icon: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-7 h-7">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+      <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/>
       <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
       <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
     </svg>
   )},
   { value: 'normal', label: 'ふつう', icon: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-7 h-7">
-      <circle cx="12" cy="12" r="10"/>
-      <line x1="8" y1="15" x2="16" y2="15"/>
+      <circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/>
       <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
       <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
     </svg>
   )},
   { value: 'bad', label: '悪い', icon: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-7 h-7">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M16 16s-1.5-2-4-2-4 2-4 2"/>
+      <circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/>
       <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
       <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
     </svg>
@@ -41,6 +38,9 @@ export default function RecordDetailPage() {
   const [record, setRecord] = useState<PetRecord | null>(null)
   const [pet, setPet] = useState<Pet | null>(null)
   const [pets, setPets] = useState<Pet[]>([])
+  const [sameDayRecords, setSameDayRecords] = useState<PetRecord[]>([])
+  const [prevRecord, setPrevRecord] = useState<PetRecord | null>(null)
+  const [nextRecord, setNextRecord] = useState<PetRecord | null>(null)
   const [editing, setEditing] = useState(false)
   const [mood, setMood] = useState<'good' | 'normal' | 'bad' | null>(null)
   const [memo, setMemo] = useState('')
@@ -59,13 +59,42 @@ export default function RecordDetailPage() {
       setMood(data.mood)
       setMemo(data.memo ?? '')
       setExtraPetIds(data.extra_pet_ids ?? [])
-      setPhotoPreview(data.image_url)
+      setPhotoPreview(data.image_url ?? null)
     })
   }, [user, id])
 
   useEffect(() => {
     if (!record || pets.length === 0) return
-    setPet(pets.find(p => p.id === record.pet_id) ?? null)
+    const currentPet = pets.find(p => p.id === record.pet_id)
+    setPet(currentPet ?? null)
+
+    // 同じ日の他のペットの記録
+    supabase
+      .from('pet_records')
+      .select('*')
+      .eq('date', record.date)
+      .neq('id', record.id)
+      .then(({ data }) => setSameDayRecords(data ?? []))
+
+    // 同じペットの前の記録
+    supabase
+      .from('pet_records')
+      .select('*')
+      .eq('pet_id', record.pet_id)
+      .lt('date', record.date)
+      .order('date', { ascending: false })
+      .limit(1)
+      .then(({ data }) => setPrevRecord(data?.[0] ?? null))
+
+    // 同じペットの次の記録
+    supabase
+      .from('pet_records')
+      .select('*')
+      .eq('pet_id', record.pet_id)
+      .gt('date', record.date)
+      .order('date', { ascending: true })
+      .limit(1)
+      .then(({ data }) => setNextRecord(data?.[0] ?? null))
   }, [record, pets])
 
   const toggleExtraPet = (petId: string) => {
@@ -107,8 +136,8 @@ export default function RecordDetailPage() {
     }
   }
 
-  const moodInfo = MOODS.find(m => m.value === (editing ? mood : record?.mood))
   const otherPets = pets.filter(p => p.id !== record?.pet_id)
+  const moodInfo = MOODS.find(m => m.value === (editing ? mood : record?.mood))
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + 'T00:00:00')
@@ -123,34 +152,70 @@ export default function RecordDetailPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#FFFBFC] pb-24">
+    <div className="min-h-screen bg-[#FFFBFC] pb-32">
+      {/* ヘッダー */}
       <header className="bg-[#FFB7C5] text-white flex items-center justify-between px-4 py-4">
         <button onClick={() => router.back()}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-6 h-6">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <span className="font-bold">{formatDate(record.date)}</span>
+        <span className="font-bold text-sm">{formatDate(record.date)}</span>
         {!editing ? (
           <button onClick={() => setEditing(true)} className="text-sm bg-white text-[#FFB7C5] px-3 py-1 rounded-full font-bold">
             編集
           </button>
         ) : (
-          <button onClick={() => setEditing(false)} className="text-sm text-white opacity-70">
+          <button onClick={() => { setEditing(false); setPhotoPreview(record.image_url ?? null) }} className="text-sm text-white opacity-70">
             キャンセル
           </button>
         )}
       </header>
 
       <div className="px-5 py-5 space-y-4">
+        {/* 写真（一番上・大きめ） */}
+        <div className="rounded-2xl overflow-hidden bg-gray-100">
+          {editing ? (
+            <label className="cursor-pointer block">
+              {photoPreview ? (
+                <img src={photoPreview} alt="" className="w-full h-56 object-cover" />
+              ) : (
+                <div className="h-56 flex flex-col items-center justify-center text-gray-400 gap-2">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-10 h-10">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                  <span className="text-sm">タップして写真を追加</span>
+                </div>
+              )}
+              <input type="file" accept="image/*" className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)) }
+                }}
+              />
+            </label>
+          ) : (
+            record.image_url
+              ? <img src={record.image_url} alt="" className="w-full h-56 object-cover" />
+              : (
+                <div className="h-32 flex items-center justify-center">
+                  {pet?.image_url
+                    ? <img src={pet.image_url} alt="" className="w-24 h-24 rounded-full object-cover" />
+                    : <div className="text-6xl">🐱</div>
+                  }
+                </div>
+              )
+          )}
+        </div>
+
         {/* ペット情報 */}
         <div className="flex items-center gap-3">
-          <div className="w-14 h-14 rounded-full overflow-hidden bg-pink-50 border-2 border-pink-100">
-            {pet?.image_url ? (
-              <img src={pet.image_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-2xl">🐱</div>
-            )}
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-pink-50 border-2 border-pink-100 shrink-0">
+            {pet?.image_url
+              ? <img src={pet.image_url} alt="" className="w-full h-full object-cover" />
+              : <div className="w-full h-full flex items-center justify-center text-lg">🐱</div>
+            }
           </div>
           <div>
             <p className="font-bold text-gray-700">{pet?.name}</p>
@@ -204,60 +269,49 @@ export default function RecordDetailPage() {
           )}
         </div>
 
-        {/* 写真 */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <label className="text-sm font-bold text-gray-600 block mb-2">写真</label>
-          {editing ? (
-            <label className="cursor-pointer block">
-              {photoPreview ? (
-                <img src={photoPreview} alt="" className="w-full h-48 object-cover rounded-xl" />
-              ) : (
-                <div className="border-2 border-dashed border-gray-200 rounded-xl h-28 flex flex-col items-center justify-center text-gray-400 text-sm gap-2">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                    <circle cx="12" cy="13" r="4"/>
-                  </svg>
-                  タップして変更
-                </div>
-              )}
-              <input type="file" accept="image/*" className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0]
-                  if (f) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)) }
-                }}
-              />
+        {/* 一緒に写っている子 */}
+        {otherPets.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-4">
+            <label className="text-sm font-bold text-gray-600 block mb-2">
+              <span className="flex items-center gap-1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                一緒に写っている子
+              </span>
             </label>
-          ) : (
-            record.image_url
-              ? <img src={record.image_url} alt="" className="w-full h-48 object-cover rounded-xl" />
-              : <p className="text-sm text-gray-300">写真なし</p>
-          )}
-
-          {/* 一緒にいる子 */}
-          {otherPets.length > 0 && (editing || (record.extra_pet_ids && record.extra_pet_ids.length > 0)) && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <p className="text-xs text-gray-400 mb-2">📷 一緒に写っている子</p>
-              <div className="flex gap-2 flex-wrap">
-                {otherPets.map(p => (
+            <div className="flex gap-2 flex-wrap">
+              {otherPets.map(p => {
+                const isSelected = (editing ? extraPetIds : record.extra_pet_ids ?? []).includes(p.id)
+                const isDisabled = !editing && !isSelected
+                if (isDisabled) return null
+                return (
                   <button
                     key={p.id}
                     onClick={() => editing && toggleExtraPet(p.id)}
+                    disabled={!editing && !isSelected}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
-                      (editing ? extraPetIds : record.extra_pet_ids ?? []).includes(p.id)
+                      isSelected
                         ? 'bg-[#FFB7C5] border-[#FFB7C5] text-white'
-                        : editing ? 'bg-white border-gray-200 text-gray-500' : 'hidden'
-                    }`}
+                        : editing
+                          ? 'bg-white border-gray-200 text-gray-500'
+                          : 'bg-gray-100 border-gray-200 text-gray-400'
+                    } ${!editing && !record.image_url ? 'opacity-40 cursor-default' : ''}`}
                   >
                     {p.image_url
                       ? <img src={p.image_url} alt={p.name} className="w-5 h-5 rounded-full object-cover" />
                       : '🐱'}
                     {p.name}
                   </button>
-                ))}
-              </div>
+                )
+              })}
+              {editing && !photoPreview && (
+                <p className="text-xs text-gray-400 w-full mt-1">※ 写真を登録すると選択できます</p>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {message && (
           <p className={`text-xs text-center ${message.includes('保存') ? 'text-green-500' : 'text-pink-400'}`}>
@@ -274,6 +328,57 @@ export default function RecordDetailPage() {
             {saving ? '保存中...' : '保存する'}
           </button>
         )}
+
+        {/* 同じ日の他の子 */}
+        {sameDayRecords.length > 0 && (
+          <div className="bg-pink-50 rounded-2xl p-4">
+            <p className="text-xs text-gray-500 mb-2">この日の他の子の記録</p>
+            <div className="flex gap-2">
+              {sameDayRecords.map(r => {
+                const p = pets.find(pt => pt.id === r.pet_id)
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => router.push(`/calendar/${r.id}`)}
+                    className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 border border-pink-100"
+                  >
+                    <div className="w-7 h-7 rounded-full overflow-hidden bg-pink-100">
+                      {p?.image_url
+                        ? <img src={p.image_url} alt="" className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center text-sm">🐱</div>
+                      }
+                    </div>
+                    <span className="text-xs font-medium text-gray-600">{p?.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 前後の記録ナビ */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => prevRecord && router.push(`/calendar/${prevRecord.id}`)}
+            disabled={!prevRecord}
+            className="flex-1 flex items-center justify-center gap-1 py-3 bg-white border border-gray-100 rounded-2xl text-xs text-gray-500 disabled:opacity-30"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            {pet?.name}の前の記録
+          </button>
+          <button
+            onClick={() => nextRecord && router.push(`/calendar/${nextRecord.id}`)}
+            disabled={!nextRecord}
+            className="flex-1 flex items-center justify-center gap-1 py-3 bg-white border border-gray-100 rounded-2xl text-xs text-gray-500 disabled:opacity-30"
+          >
+            {pet?.name}の次の記録
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   )

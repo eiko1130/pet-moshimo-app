@@ -8,6 +8,39 @@ import type { Pet, PetRecord } from '@/types'
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 
+const MoodIcon = ({ mood, active }: { mood: string | null, active?: boolean }) => {
+  const color = active ? 'white' : mood === 'good' ? '#4ade80' : mood === 'normal' ? '#facc15' : mood === 'bad' ? '#f87171' : '#d1d5db'
+  if (mood === 'good') return (
+    <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} className="w-5 h-5">
+      <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+      <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
+      <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
+    </svg>
+  )
+  if (mood === 'normal') return (
+    <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} className="w-5 h-5">
+      <circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/>
+      <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
+      <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
+    </svg>
+  )
+  if (mood === 'bad') return (
+    <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} className="w-5 h-5">
+      <circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/>
+      <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
+      <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
+    </svg>
+  )
+  return null
+}
+
+const moodLabel = (mood: string | null) => {
+  if (mood === 'good') return '元気いっぱい'
+  if (mood === 'normal') return '普通'
+  if (mood === 'bad') return '体調注意'
+  return '-'
+}
+
 export default function CalendarPage() {
   const { user } = useAuth()
   const router = useRouter()
@@ -64,20 +97,12 @@ export default function CalendarPage() {
 
   const getPet = (petId: string) => pets.find(p => p.id === petId)
 
-  const moodLabel = (mood: string | null) => {
-    if (mood === 'good') return { text: '元気いっぱい', color: 'bg-green-100 text-green-600' }
-    if (mood === 'normal') return { text: '普通', color: 'bg-yellow-100 text-yellow-600' }
-    if (mood === 'bad') return { text: '体調注意', color: 'bg-red-100 text-red-500' }
-    return { text: '-', color: 'bg-gray-100 text-gray-400' }
-  }
-
   return (
     <div className="min-h-screen bg-[#FFFBFC] pb-24">
       <header className="bg-[#FFB7C5] text-white text-center py-4 text-lg font-bold">
         見守り記録カレンダー
       </header>
 
-      {/* カレンダー */}
       <div className="mx-4 mt-4 bg-white rounded-2xl shadow-sm border border-gray-50 p-4">
         <div className="flex items-center justify-between mb-4">
           <button onClick={prevMonth} className="text-gray-400 p-1">
@@ -115,18 +140,14 @@ export default function CalendarPage() {
               <button
                 key={day}
                 onClick={() => setSelectedDate(dateStr)}
-                className={`flex flex-col items-center py-1.5 rounded-xl transition-all ${
-                  isSelected ? 'bg-pink-50' : ''
-                }`}
+                className={`flex flex-col items-center py-1.5 rounded-xl transition-all ${isSelected ? 'bg-pink-50' : ''}`}
               >
                 <span className={`text-sm w-7 h-7 flex items-center justify-center rounded-full font-medium ${
                   isToday ? 'bg-[#FFB7C5] text-white' :
                   dow === 0 ? 'text-red-400' :
                   dow === 6 ? 'text-blue-400' :
                   'text-gray-600'
-                }`}>
-                  {day}
-                </span>
+                }`}>{day}</span>
                 {hasRecord
                   ? <div className="w-1.5 h-1.5 rounded-full bg-[#FFB7C5] mt-0.5" />
                   : <div className="w-1.5 h-1.5 mt-0.5" />
@@ -160,7 +181,7 @@ export default function CalendarPage() {
           <div className="space-y-3">
             {selectedRecords.map(record => {
               const pet = getPet(record.pet_id)
-              const mood = moodLabel(record.mood)
+              const thumbUrl = record.image_url || pet?.image_url || null
               return (
                 <button
                   key={record.id}
@@ -168,27 +189,24 @@ export default function CalendarPage() {
                   className="w-full bg-white rounded-2xl border border-gray-100 p-4 text-left"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-pink-50 shrink-0">
-                      {pet?.image_url ? (
-                        <img src={pet.image_url} alt="" className="w-full h-full object-cover" />
+                    {/* サムネイル：記録写真 > ペット写真 */}
+                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-pink-50 shrink-0">
+                      {thumbUrl ? (
+                        <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xl">🐱</div>
+                        <div className="w-full h-full flex items-center justify-center text-2xl">🐱</div>
                       )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-bold text-gray-700 text-sm">{pet?.name ?? '不明'}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${mood.color}`}>
-                          {mood.text}
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <MoodIcon mood={record.mood} />
+                          <span className="text-xs text-gray-500">{moodLabel(record.mood)}</span>
+                        </div>
                       </div>
                       {record.memo && (
                         <p className="text-xs text-gray-500 line-clamp-2">{record.memo}</p>
-                      )}
-                      {record.image_url && (
-                        <div className="mt-2 w-12 h-12 rounded-lg overflow-hidden">
-                          <img src={record.image_url} alt="" className="w-full h-full object-cover" />
-                        </div>
                       )}
                     </div>
                   </div>
@@ -196,7 +214,6 @@ export default function CalendarPage() {
               )
             })}
 
-            {/* その日にまだ記録していないペットがいれば追加ボタン表示 */}
             {pets.filter(p => !selectedRecords.some(r => r.pet_id === p.id)).length > 0 && (
               <button
                 onClick={() => router.push('/record')}
@@ -209,7 +226,6 @@ export default function CalendarPage() {
         )}
       </div>
 
-      {/* FAB */}
       <button
         onClick={() => router.push('/record')}
         className="fixed bottom-20 right-5 w-12 h-12 bg-[#FFB7C5] rounded-full shadow-lg flex items-center justify-center text-white"
