@@ -112,9 +112,9 @@ export default function RecordDetailPage() {
         const ext = photoFile.name.split('.').pop()
         const path = `${user!.id}/${Date.now()}.${ext}`
         const { error: uploadError } = await supabase.storage
-          .from('pet-photos').upload(path, photoFile)
+          .from('pet-images').upload(path, photoFile)
         if (!uploadError) {
-          const { data } = supabase.storage.from('pet-photos').getPublicUrl(path)
+          const { data } = supabase.storage.from('pet-images').getPublicUrl(path)
           image_url = data.publicUrl
         }
       }
