@@ -3,41 +3,72 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
-import BottomNav from '@/components/BottomNav'
-import type { OwnerInfo } from '@/types'
 
-export default function OwnerInfoPage() {
+export default function MoshimoInfoPage() {
   const { user } = useAuth()
   const router = useRouter()
-  const [form, setForm] = useState<Partial<OwnerInfo>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
+  const [form, setForm] = useState({
+    full_name: '',
+    address: '',
+    key_location: '',
+    hospital_name: '',
+    hospital_phone: '',
+    vaccine_info: '',
+    insurance_info: '',
+    message: '',
+    proxy_name: '',
+    proxy_phone: '',
+    proxy_email: '',
+  })
+
   useEffect(() => {
     if (!user) return
     supabase
-      .from('owner_info')
+      .from('moshimo_info')
       .select('*')
       .eq('user_id', user.id)
       .single()
       .then(({ data }) => {
-        if (data) setForm(data)
+        if (data) setForm({
+          full_name: data.full_name ?? '',
+          address: data.address ?? '',
+          key_location: data.key_location ?? '',
+          hospital_name: data.hospital_name ?? '',
+          hospital_phone: data.hospital_phone ?? '',
+          vaccine_info: data.vaccine_info ?? '',
+          insurance_info: data.insurance_info ?? '',
+          message: data.message ?? '',
+          proxy_name: data.proxy_name ?? '',
+          proxy_phone: data.proxy_phone ?? '',
+          proxy_email: data.proxy_email ?? '',
+        })
         setLoading(false)
       })
   }, [user])
 
-  const set = (key: keyof OwnerInfo, value: string) => setForm(f => ({ ...f, [key]: value }))
+  const set = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }))
 
   const handleSave = async () => {
     if (!user) return
     setSaving(true)
-    setMessage('')
     try {
-      const { error } = await supabase
-        .from('owner_info')
-        .upsert({ ...form, user_id: user.id }, { onConflict: 'user_id' })
-      if (error) throw error
+      const { data: existing } = await supabase
+        .from('moshimo_info')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
+
+      const payload = { ...form, user_id: user.id, updated_at: new Date().toISOString() }
+
+      if (existing) {
+        await supabase.from('moshimo_info').update(payload).eq('user_id', user.id)
+      } else {
+        await supabase.from('moshimo_info').insert(payload)
+      }
       setMessage('保存しました！')
       setTimeout(() => setMessage(''), 2000)
     } catch (e: any) {
@@ -54,169 +85,125 @@ export default function OwnerInfoPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#FFFBFC] pb-24">
-      <header className="bg-[#FFB7C5] text-white flex items-center px-4 py-4 gap-3">
+    <div className="min-h-screen bg-[#FFFBFC] pb-10">
+      <header className="bg-[#FFB7C5] text-white flex items-center justify-between px-4 py-4">
         <button onClick={() => router.back()}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-6 h-6">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <span className="text-lg font-bold">緊急情報の編集</span>
+        <span className="font-bold">もしもの時のために</span>
+        <div className="w-6" />
       </header>
 
-      {/* イラスト */}
-      <div className="flex justify-center gap-6 py-5 text-5xl">
-        <span>🐩</span><span>🐱</span><span>🐶</span>
+      {/* 説明文 */}
+      <div className="mx-5 mt-5 bg-pink-50 rounded-2xl p-4">
+        <p className="text-xs text-gray-500 leading-relaxed">
+          🐾 もし私に何かあったとき、このページの情報をもとにペットのお世話をお願いします。緊急連絡先に登録した方に情報が共有されます。
+        </p>
       </div>
-      <p className="text-center text-sm font-bold text-gray-600 mb-1">かかりつけ医・保険情報</p>
-      <p className="text-center text-xs text-gray-400 mb-5">大切なペットのための緊急連絡先を登録しましょう</p>
 
-      <div className="px-5 space-y-4">
-        {/* かかりつけ動物病院 */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-red-400">🏥</span>
-            <span className="text-sm font-bold text-gray-600">かかりつけの動物病院</span>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">病院名</label>
-              <input
-                type="text"
-                value={form.vet_name ?? ''}
-                onChange={(e) => set('vet_name', e.target.value)}
-                placeholder="例：ひまわり動物病院"
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-pink-200"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">電話番号</label>
-              <input
-                type="tel"
-                value={form.vet_phone ?? ''}
-                onChange={(e) => set('vet_phone', e.target.value)}
-                placeholder="03-0000-0000"
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-pink-200"
-              />
-            </div>
-          </div>
-        </div>
+      <div className="px-5 py-4 space-y-5">
 
-        {/* ペット保険情報 */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-blue-400">📋</span>
-            <span className="text-sm font-bold text-gray-600">ペット保険情報</span>
+        {/* 私について */}
+        <section>
+          <h2 className="text-sm font-bold text-[#FFB7C5] mb-3 flex items-center gap-2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            私について
+          </h2>
+          <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
+            {[
+              { label: '氏名', key: 'full_name', placeholder: '山田 花子' },
+              { label: '住所', key: 'address', placeholder: '東京都渋谷区...' },
+              { label: '鍵の場所', key: 'key_location', placeholder: '玄関右の植木鉢の下' },
+            ].map(item => (
+              <div key={item.key} className="px-4 py-3">
+                <label className="text-xs text-gray-400 block mb-1">{item.label}</label>
+                <input
+                  type="text"
+                  value={form[item.key as keyof typeof form]}
+                  onChange={e => set(item.key, e.target.value)}
+                  placeholder={item.placeholder}
+                  className="w-full text-sm text-gray-700 bg-transparent focus:outline-none"
+                />
+              </div>
+            ))}
           </div>
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">保険会社名</label>
-              <input
-                type="text"
-                value={form.insurance_company ?? ''}
-                onChange={(e) => set('insurance_company', e.target.value)}
-                placeholder="例：○○ペット保険"
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-pink-200"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">証券番号</label>
-              <input
-                type="text"
-                value={form.insurance_number ?? ''}
-                onChange={(e) => set('insurance_number', e.target.value)}
-                placeholder="A123456789"
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-pink-200"
-              />
-            </div>
-          </div>
-        </div>
+        </section>
 
-        {/* ワクチン接種記録 */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-green-400">💉</span>
-            <span className="text-sm font-bold text-gray-600">最新のワクチン接種記録</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">接種日</label>
-              <input
-                type="date"
-                value={form.vaccine_date ?? ''}
-                onChange={(e) => set('vaccine_date', e.target.value)}
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-pink-200"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">ワクチンの種類</label>
-              <select
-                value={form.vaccine_type ?? ''}
-                onChange={(e) => set('vaccine_type', e.target.value)}
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-pink-200"
-              >
-                <option value="">選択</option>
-                <option value="混合ワクチン">混合ワクチン</option>
-                <option value="狂犬病">狂犬病</option>
-                <option value="3種混合">3種混合</option>
-                <option value="5種混合">5種混合</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* 住所・緊急メッセージ */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-orange-400">🏠</span>
-            <span className="text-sm font-bold text-gray-600">飼い主情報</span>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">氏名</label>
-              <input
-                type="text"
-                value={form.full_name ?? ''}
-                onChange={(e) => set('full_name', e.target.value)}
-                placeholder="例：山田 花子"
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-pink-200"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">住所</label>
-              <input
-                type="text"
-                value={form.address ?? ''}
-                onChange={(e) => set('address', e.target.value)}
-                placeholder="例：東京都渋谷区..."
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-pink-200"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">鍵の場所</label>
-              <input
-                type="text"
-                value={form.key_location ?? ''}
-                onChange={(e) => set('key_location', e.target.value)}
-                placeholder="例：玄関マットの下"
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-pink-200"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">緊急メッセージ</label>
+        {/* ペットについて */}
+        <section>
+          <h2 className="text-sm font-bold text-[#FFB7C5] mb-3 flex items-center gap-2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            ペットについて
+          </h2>
+          <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
+            {[
+              { label: 'かかりつけ医', key: 'hospital_name', placeholder: 'にじいろ動物病院' },
+              { label: 'かかりつけ医の電話番号', key: 'hospital_phone', placeholder: '03-1234-5678' },
+              { label: 'ワクチン情報', key: 'vaccine_info', placeholder: '混合ワクチン 2024年3月接種済み' },
+              { label: '保険情報', key: 'insurance_info', placeholder: 'ペット保険 証券番号: ...' },
+            ].map(item => (
+              <div key={item.key} className="px-4 py-3">
+                <label className="text-xs text-gray-400 block mb-1">{item.label}</label>
+                <input
+                  type="text"
+                  value={form[item.key as keyof typeof form]}
+                  onChange={e => set(item.key, e.target.value)}
+                  placeholder={item.placeholder}
+                  className="w-full text-sm text-gray-700 bg-transparent focus:outline-none"
+                />
+              </div>
+            ))}
+            <div className="px-4 py-3">
+              <label className="text-xs text-gray-400 block mb-1">緊急時のメッセージ</label>
               <textarea
-                value={form.emergency_msg ?? ''}
-                onChange={(e) => set('emergency_msg', e.target.value)}
-                placeholder="もしもの時に伝えたいこと"
+                value={form.message}
+                onChange={e => set('message', e.target.value)}
+                placeholder="ご飯は朝晩1回ずつ。ビビりなので優しく接してください。"
                 rows={3}
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-pink-200 resize-none"
+                className="w-full text-sm text-gray-700 bg-transparent focus:outline-none resize-none"
               />
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* 緊急連絡先 */}
+        <section>
+          <h2 className="text-sm font-bold text-[#FFB7C5] mb-3 flex items-center gap-2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            緊急連絡先
+          </h2>
+          <p className="text-xs text-gray-400 mb-2">もしもの時に連絡する方の情報を登録してください。</p>
+          <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
+            {[
+              { label: '名前', key: 'proxy_name', placeholder: '佐藤 太郎', type: 'text' },
+              { label: '電話番号', key: 'proxy_phone', placeholder: '090-0000-0000', type: 'tel' },
+              { label: 'メールアドレス', key: 'proxy_email', placeholder: 'taro@example.com', type: 'email' },
+            ].map(item => (
+              <div key={item.key} className="px-4 py-3">
+                <label className="text-xs text-gray-400 block mb-1">{item.label}</label>
+                <input
+                  type={item.type}
+                  value={form[item.key as keyof typeof form]}
+                  onChange={e => set(item.key, e.target.value)}
+                  placeholder={item.placeholder}
+                  className="w-full text-sm text-gray-700 bg-transparent focus:outline-none"
+                />
+              </div>
+            ))}
+          </div>
+        </section>
 
         {message && (
-          <p className={`text-xs text-center ${message.includes('保存しました') ? 'text-green-500' : 'text-pink-400'}`}>
+          <p className={`text-xs text-center ${message.includes('保存') ? 'text-green-500' : 'text-pink-400'}`}>
             {message}
           </p>
         )}
@@ -224,14 +211,11 @@ export default function OwnerInfoPage() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-sm disabled:opacity-50"
+          className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base disabled:opacity-50"
         >
-          {saving ? '保存中...' : '内容を保存する'}
+          {saving ? '保存中...' : '保存する'}
         </button>
-        <p className="text-center text-xs text-gray-400 pb-2">情報はいつでも変更可能です</p>
       </div>
-
-      <BottomNav />
     </div>
   )
 }
