@@ -2,10 +2,14 @@ export type Pet = {
   id: string
   user_id: string
   name: string
-  species: string
-  birthday: string | null
+  species: string | null
+  birth_year: number | null
+  birth_month: number | null
   photo_url: string | null
   image_url: string | null
+  vaccine_info: string | null
+  insurance_info: string | null
+  pet_message: string | null
   notes: string | null
   created_at: string
 }
