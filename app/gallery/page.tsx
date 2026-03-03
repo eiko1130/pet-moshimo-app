@@ -131,66 +131,66 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {/* ポップアップ */}
-      {popupRecord && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col">
-          {/* 閉じるボタン */}
-          <div className="flex justify-end p-4">
-            <button onClick={() => setPopupRecord(null)} className="text-white">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-7 h-7">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
+     {/* ポップアップ */}
+{popupRecord && (
+  <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center px-4" onClick={() => setPopupRecord(null)}>
+    <div className="bg-white rounded-3xl overflow-hidden w-full max-w-sm" onClick={e => e.stopPropagation()}>
+      {/* 写真 */}
+      <div className="relative">
+        <img
+          src={popupRecord.image_url!}
+          alt=""
+          className="w-full max-h-64 object-contain bg-gray-50"
+        />
+        <button
+          onClick={() => setPopupRecord(null)}
+          className="absolute top-3 right-3 bg-black/40 rounded-full p-1.5 text-white"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
 
-          {/* 写真 */}
-          <div className="flex-1 flex items-center justify-center px-4">
-            <img
-              src={popupRecord.image_url!}
-              alt=""
-              className="max-w-full max-h-full object-contain rounded-xl"
-            />
-          </div>
-
-          {/* 日付・メモ */}
-          {popupRecord.memo && (
-            <div className="px-5 py-2">
-              <p className="text-white/70 text-xs text-center line-clamp-2">{popupRecord.memo}</p>
-            </div>
-          )}
-
-          {/* ナビゲーション */}
-          <div className="flex gap-3 px-4 py-3">
-            <button
-              onClick={() => prevPhoto && setPopupRecord(prevPhoto)}
-              disabled={!prevPhoto}
-              className="flex-1 flex items-center justify-center gap-1 py-3 bg-white/10 rounded-2xl text-white text-xs disabled:opacity-30"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
-                <polyline points="15 18 9 12 15 6"/>
-              </svg>
-              前の写真
-            </button>
-            <button
-              onClick={() => router.push(`/calendar/${popupRecord.id}`)}
-              className="flex-1 flex items-center justify-center gap-1 py-3 bg-[#FFB7C5]/80 rounded-2xl text-white text-xs"
-            >
-              📖 この日の日記
-            </button>
-            <button
-              onClick={() => nextPhoto && setPopupRecord(nextPhoto)}
-              disabled={!nextPhoto}
-              className="flex-1 flex items-center justify-center gap-1 py-3 bg-white/10 rounded-2xl text-white text-xs disabled:opacity-30"
-            >
-              次の写真
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </button>
-          </div>
+      {/* メモ */}
+      {popupRecord.memo && (
+        <div className="px-4 pt-3">
+          <p className="text-gray-500 text-xs line-clamp-2">{popupRecord.memo}</p>
         </div>
       )}
+
+      {/* ナビゲーション */}
+      <div className="flex gap-2 px-4 py-4">
+        <button
+          onClick={() => prevPhoto && setPopupRecord(prevPhoto)}
+          disabled={!prevPhoto}
+          className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-gray-100 rounded-xl text-gray-600 text-xs font-medium disabled:opacity-30"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          前の写真
+        </button>
+        <button
+          onClick={() => router.push(`/calendar/${popupRecord.id}`)}
+          className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-[#FFB7C5] rounded-xl text-white text-xs font-medium"
+        >
+          📖 この日の日記
+        </button>
+        <button
+          onClick={() => nextPhoto && setPopupRecord(nextPhoto)}
+          disabled={!nextPhoto}
+          className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-gray-100 rounded-xl text-gray-600 text-xs font-medium disabled:opacity-30"
+        >
+          次の写真
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       <BottomNav />
     </div>
