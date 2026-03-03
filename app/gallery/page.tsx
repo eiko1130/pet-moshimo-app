@@ -158,7 +158,7 @@ export default function GalleryPage() {
       )}
 
       {/* ナビゲーション */}
-      <div className="flex gap-2 px-4 pt-3 pb-8">
+      <div className="flex gap-2 px-4 pt-3 pb-24">
         <button
           onClick={() => prevPhoto && setPopupRecord(prevPhoto)}
           disabled={!prevPhoto}
