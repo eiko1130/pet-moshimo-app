@@ -131,20 +131,20 @@ export default function GalleryPage() {
         </div>
       )}
 
-     {/* ポップアップ */}
-{popupRecord && (
-  <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center px-4" onClick={() => setPopupRecord(null)}>
-    <div className="bg-white rounded-3xl overflow-hidden w-full max-w-sm" onClick={e => e.stopPropagation()}>
+      {/* ポップアップ */}
+      {popupRecord && (
+  <div className="fixed inset-0 z-50 bg-black/70 flex items-end justify-center" onClick={() => setPopupRecord(null)}>
+    <div className="bg-white rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
       {/* 写真 */}
-      <div className="relative">
+      <div className="relative mx-4 mt-4">
         <img
           src={popupRecord.image_url!}
           alt=""
-          className="w-full max-h-64 object-contain bg-gray-50"
+          className="w-full h-56 object-contain bg-gray-50 rounded-2xl"
         />
         <button
           onClick={() => setPopupRecord(null)}
-          className="absolute top-3 right-3 bg-black/40 rounded-full p-1.5 text-white"
+          className="absolute top-2 right-2 bg-black/40 rounded-full p-1.5 text-white"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -154,13 +154,11 @@ export default function GalleryPage() {
 
       {/* メモ */}
       {popupRecord.memo && (
-        <div className="px-4 pt-3">
-          <p className="text-gray-500 text-xs line-clamp-2">{popupRecord.memo}</p>
-        </div>
+        <p className="text-gray-500 text-xs px-5 pt-3 line-clamp-2">{popupRecord.memo}</p>
       )}
 
       {/* ナビゲーション */}
-      <div className="flex gap-2 px-4 py-4">
+      <div className="flex gap-2 px-4 pt-3 pb-8">
         <button
           onClick={() => prevPhoto && setPopupRecord(prevPhoto)}
           disabled={!prevPhoto}
