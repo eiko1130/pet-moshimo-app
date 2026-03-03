@@ -197,7 +197,7 @@ export default function RecordDetailPage() {
             </label>
           ) : (
             record.image_url
-              ? <img src={record.image_url} alt="" className="w-full h-56 object-cover" />
+              ? <img src={record.image_url} alt="" className="w-full max-h-96 object-contain bg-gray-50" />
               : (
                 <div className="h-32 flex items-center justify-center">
                   {pet?.image_url
