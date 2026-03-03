@@ -10,21 +10,22 @@ type Step = typeof STEPS[number]
 
 const tutorialSlides = [
   {
-    emoji: '📝',
+    image: '/tutorial-record.png',
+    image2: '/tutorial-record2.png',
     title: '毎日の記録をつけよう',
-    desc: 'ホーム画面の「きょうの健康記録」から、ペットの様子を毎日記録しましょう。写真も一緒に残せます。',
+    desc: '「見守り記録」からペットのごきげんと写真を毎日記録しましょう。ペットを選んで、ごきげんを選んで、提出するだけ！',
     color: 'bg-pink-50',
   },
   {
-    emoji: '📅',
+    image: '/tutorial-calendar.png',
     title: 'カレンダーで振り返ろう',
-    desc: '記録した日はカレンダーにマークが付きます。過去の記録をいつでも確認できます。',
+    desc: '記録した日はカレンダーにピンクのドットが付きます。日付をタップするとその日の記録が確認できます。',
     color: 'bg-blue-50',
   },
   {
-    emoji: '🖼️',
+    image: '/tutorial-gallery.png',
     title: '思い出フォトで写真を楽しもう',
-    desc: '記録した写真は「思い出」にまとめて表示されます。大切な瞬間を振り返りましょう。',
+    desc: '記録した写真は「思い出」にまとめて表示されます。ペット名で絞り込みもできます。',
     color: 'bg-yellow-50',
   },
 ]
@@ -353,38 +354,55 @@ export default function OnboardingPage() {
 
       {/* チュートリアル1・2・3 */}
       {(step === 'tutorial1' || step === 'tutorial2' || step === 'tutorial3') && (() => {
-        const index = step === 'tutorial1' ? 0 : step === 'tutorial2' ? 1 : 2
-        const slide = tutorialSlides[index]
-        const nextStep: Step = step === 'tutorial1' ? 'tutorial2' : step === 'tutorial2' ? 'tutorial3' : 'done'
-        return (
-          <div className={`flex flex-col items-center justify-center flex-1 px-8 text-center ${slide.color}`}>
-            {/* ドット */}
-            <div className="flex gap-2 mb-10">
-              {tutorialSlides.map((_, i) => (
-                <div key={i} className={`w-2 h-2 rounded-full transition-all ${i === index ? 'bg-[#FFB7C5] w-6' : 'bg-gray-300'}`} />
-              ))}
-            </div>
+  const index = step === 'tutorial1' ? 0 : step === 'tutorial2' ? 1 : 2
+  const slide = tutorialSlides[index]
+  const nextStep: Step = step === 'tutorial1' ? 'tutorial2' : step === 'tutorial2' ? 'tutorial3' : 'done'
+  return (
+    <div className={`flex flex-col flex-1 ${slide.color}`}>
+      {/* ドット */}
+      <div className="flex justify-center gap-2 pt-6 pb-4">
+        {tutorialSlides.map((_, i) => (
+          <div key={i} className={`h-2 rounded-full transition-all duration-300 ${
+            i === index ? 'bg-[#FFB7C5] w-6' : 'bg-gray-300 w-2'
+          }`} />
+        ))}
+      </div>
 
-            <div className="text-8xl mb-8 animate-bounce">{slide.emoji}</div>
-            <h2 className="text-xl font-bold text-gray-700 mb-4">{slide.title}</h2>
-            <p className="text-sm text-gray-500 leading-relaxed mb-12">{slide.desc}</p>
+      {/* スクリーンショット */}
+      <div className="flex justify-center gap-2 px-4 flex-1 items-center">
+        {'image2' in slide && slide.image2 ? (
+          <>
+            <img src={slide.image} alt="" className="w-[47%] rounded-2xl shadow-md object-cover object-top max-h-72" />
+            <img src={slide.image2} alt="" className="w-[47%] rounded-2xl shadow-md object-cover object-top max-h-72" />
+          </>
+        ) : (
+          <img src={slide.image} alt="" className="w-[80%] rounded-2xl shadow-md object-cover object-top max-h-80" />
+        )}
+      </div>
 
-            <button onClick={() => setStep(nextStep)}
-              className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2"
-            >
-              {step === 'tutorial3' ? 'さっそく始める' : '次へ'}
-              {step !== 'tutorial3' && (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              )}
-            </button>
-            <button onClick={completeOnboarding} className="text-sm text-gray-400 py-3 mt-2">
-              スキップ
-            </button>
-          </div>
-        )
-      })()}
+      {/* テキスト */}
+      <div className="px-8 pt-5 pb-8 text-center">
+        <h2 className="text-lg font-bold text-gray-700 mb-2">{slide.title}</h2>
+        <p className="text-sm text-gray-500 leading-relaxed mb-8">{slide.desc}</p>
+
+        <button
+          onClick={() => setStep(nextStep)}
+          className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2"
+        >
+          {step === 'tutorial3' ? 'さっそく始める 🐱' : '次へ'}
+          {step !== 'tutorial3' && (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          )}
+        </button>
+        <button onClick={completeOnboarding} className="text-sm text-gray-400 py-3 mt-1 w-full">
+          スキップ
+        </button>
+      </div>
+    </div>
+  )
+})()}
 
       {/* 完了 */}
       {step === 'done' && (
