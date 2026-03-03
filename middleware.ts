@@ -9,9 +9,7 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
+        getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
@@ -24,17 +22,29 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-
   const { pathname } = request.nextUrl
 
-  if (pathname.startsWith('/auth') && user) {
+  // 未ログイン → /authへ
+  if (!user && !pathname.startsWith('/auth')) {
+    return NextResponse.redirect(new URL('/auth', request.url))
+  }
+
+  // ログイン済みで/authにいる → /へ
+  if (user && pathname.startsWith('/auth')) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  const protectedPaths = ['/', '/record', '/calendar', '/gallery', '/pets', '/settings']
-  const isProtected = protectedPaths.some(p => pathname === p || pathname.startsWith(p + '/'))
-  if (isProtected && !user) {
-    return NextResponse.redirect(new URL('/auth', request.url))
+  // ログイン済みでオンボーディング未完了 → /onboardingへ
+  if (user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/auth')) {
+    const { data } = await supabase
+      .from('moshimo_info')
+      .select('onboarding_completed')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!data || !data.onboarding_completed) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
   }
 
   return supabaseResponse
