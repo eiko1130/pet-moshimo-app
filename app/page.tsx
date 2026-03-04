@@ -29,39 +29,56 @@ export default function HomePage() {
       </header>
 
       {/* ドロワーメニュー */}
-            {menuOpen && (
-        <div className="fixed inset-0 z-50" onClick={() => setMenuOpen(false)}>
-          <div className="absolute top-0 left-0 w-64 h-full bg-white shadow-lg p-6" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-8">
-              <span className="font-bold text-gray-600">メニュー</span>
-              <button onClick={() => setMenuOpen(false)} className="text-gray-400">✕</button>
-            </div>
-            <Link
-              href="/onboarding"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 text-gray-500 text-sm w-full py-3 border-b border-gray-100"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              このアプリについて
-            </Link>
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-3 text-gray-500 text-sm w-full py-3 border-t border-gray-100 mt-auto absolute bottom-8 left-6"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-              ログアウト
-            </button>
-          </div>
-        </div>
-      )}
+      {menuOpen && (
+  <div className="fixed inset-0 z-50" onClick={() => setMenuOpen(false)}>
+    <div className="absolute top-0 left-0 w-64 h-full bg-white shadow-lg p-6 flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="flex items-center justify-between mb-8">
+        <span className="font-bold text-gray-600">メニュー</span>
+        <button onClick={() => setMenuOpen(false)} className="text-gray-400">✕</button>
+      </div>
+
+      <div className="flex flex-col gap-1 flex-1">
+        <Link href="/onboarding" onClick={() => setMenuOpen(false)}
+          className="flex items-center gap-3 text-gray-500 text-sm w-full py-3 border-b border-gray-100">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          このアプリについて
+        </Link>
+
+        <Link href="/pets" onClick={() => setMenuOpen(false)}
+          className="flex items-center gap-3 text-gray-500 text-sm w-full py-3 border-b border-gray-100">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          ペット情報
+        </Link>
+
+        <Link href="/settings/owner" onClick={() => setMenuOpen(false)}
+          className="flex items-center gap-3 text-gray-500 text-sm w-full py-3 border-b border-gray-100">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          オーナー情報
+        </Link>
+      </div>
+
+      <button onClick={handleSignOut}
+        className="flex items-center gap-3 text-gray-500 text-sm w-full py-3 border-t border-gray-100">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        ログアウト
+      </button>
+    </div>
+  </div>
+)}
+    
       {/* ロゴ・メインビジュアル */}
       <div className="flex flex-col items-center py-4">
         <Image src="/logo.png" alt="もしも手帳" width={240} height={48} priority className="mb-4" />
