@@ -30,6 +30,7 @@ export default function HomePage() {
 
       {/* ドロワーメニュー */}
       {menuOpen && (
+<div className="absolute top-0 left-0 w-64 h-full bg-white shadow-lg p-6 flex flex-col overflow-y-auto" onClick={e => e.stopPropagation()}>
   <div className="fixed inset-0 z-50" onClick={() => setMenuOpen(false)}>
     <div className="absolute top-0 left-0 w-64 h-full bg-white shadow-lg p-6 flex flex-col" onClick={e => e.stopPropagation()}>
       <div className="flex items-center justify-between mb-8">
@@ -77,7 +78,8 @@ export default function HomePage() {
       </button>
     </div>
   </div>
-)}
+ </div>
+  )}
     
       {/* ロゴ・メインビジュアル */}
       <div className="flex flex-col items-center py-4">
