@@ -177,6 +177,7 @@ export default function RecordPage() {
             <input
               type="date"
               value={date}
+              max={toLocalDateString()}
               onChange={(e) => setDate(e.target.value)}
               className="text-sm bg-transparent focus:outline-none"
             />
