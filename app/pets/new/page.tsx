@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import BottomNav from '@/components/BottomNav'
+import { compressImage } from '@/lib/compressImage'
 
 export default function NewPetPage() {
   const { user } = useAuth()
@@ -31,17 +32,16 @@ export default function NewPetPage() {
     }
     setLoading(true)
     try {
-      let photo_url = null
+      let image_url = null
 
       if (photoFile) {
-        const ext = photoFile.name.split('.').pop()
-        const path = `${user.id}/${Date.now()}.${ext}`
+        const compressed = await compressImage(photoFile)
+        const path = `${user.id}/${Date.now()}.jpg`
         const { error: uploadError } = await supabase.storage
-          .from('pet-photos')
-          .upload(path, photoFile)
+          .from('pet-images').upload(path, compressed)
         if (!uploadError) {
-          const { data } = supabase.storage.from('pet-photos').getPublicUrl(path)
-          photo_url = data.publicUrl
+          const { data } = supabase.storage.from('pet-images').getPublicUrl(path)
+          image_url = data.publicUrl
         }
       }
 
@@ -51,7 +51,7 @@ export default function NewPetPage() {
         species,
         birthday: birthday || null,
         notes: notes || null,
-        photo_url,
+        image_url,
       })
       if (error) throw error
       router.push('/pets')
@@ -74,7 +74,6 @@ export default function NewPetPage() {
       </header>
 
       <div className="px-5 py-6 space-y-4">
-        {/* 写真 */}
         <div className="flex justify-center">
           <label className="cursor-pointer">
             <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-md bg-pink-50 flex items-center justify-center">

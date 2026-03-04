@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
+import { compressImage } from '@/lib/compressImage'
+
 
 const SPECIES_OPTIONS = ['猫', '犬', 'その他']
 
@@ -57,10 +59,10 @@ export default function PetDetailPage() {
     try {
       let image_url = photoPreview
       if (photoFile) {
-        const ext = photoFile.name.split('.').pop()
-        const path = `${user.id}/${Date.now()}.${ext}`
+        const compressed = await compressImage(photoFile)
+        const path = `${user.id}/${Date.now()}.jpg`
         const { error: uploadError } = await supabase.storage
-          .from('pet-images').upload(path, photoFile)
+          .from('pet-images').upload(path, compressed)
         if (!uploadError) {
           const { data } = supabase.storage.from('pet-images').getPublicUrl(path)
           image_url = data.publicUrl

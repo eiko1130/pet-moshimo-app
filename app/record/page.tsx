@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import BottomNav from '@/components/BottomNav'
 import type { Pet } from '@/types'
+import { compressImage } from '@/lib/compressImage'
+
 
 const MOODS = [
   { value: 'good', label: '良い', icon: (
@@ -85,11 +87,11 @@ export default function RecordPage() {
     try {
       let image_url = null
       if (photoFile) {
-        const ext = photoFile.name.split('.').pop()
-        const path = `${user.id}/${Date.now()}.${ext}`
+        const compressed = await compressImage(photoFile)
+        const path = `${user.id}/${Date.now()}.jpg`
         const { error: uploadError } = await supabase.storage
           .from('pet-images')
-          .upload(path, photoFile)
+          .upload(path, compressed)
         if (!uploadError) {
           const { data } = supabase.storage.from('pet-images').getPublicUrl(path)
           image_url = data.publicUrl
