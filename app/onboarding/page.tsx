@@ -354,7 +354,7 @@ export default function OnboardingPage() {
                   <img src={slide.image2} alt="" className="w-[47%] rounded-2xl shadow-md object-cover object-top max-h-72" />
                 </>
               ) : (
-                <img src={slide.image} alt="" className="w-[95%] rounded-2xl shadow-md object-contain max-h-96" />
+                <img src={slide.image} alt="" className="w-[95%] rounded-2xl shadow-md object-contain" />
               )}
             </div>
             <div className="px-8 pt-5 pb-8 text-center">
