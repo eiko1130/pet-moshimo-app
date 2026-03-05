@@ -37,7 +37,7 @@ export default function HomePage() {
               <button onClick={() => setMenuOpen(false)} className="text-gray-400">✕</button>
             </div>
             <div className="flex flex-col gap-1">
-              <Link href="/onboarding" onClick={() => setMenuOpen(false)}
+              <Link href="/onboarding?mode=tutorial" onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-3 text-gray-500 text-sm w-full py-3 border-b border-gray-100">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
                   <circle cx="12" cy="12" r="10"/>

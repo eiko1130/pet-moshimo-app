@@ -1,6 +1,6 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import Image from 'next/image'
@@ -37,23 +37,30 @@ const tutorialSlides = [
 ]
 
 export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FFFBFC]" />}>
+      <OnboardingInner />
+    </Suspense>
+  )
+}
+
+function OnboardingInner() {
   const { user } = useAuth()
   const router = useRouter()
-  const [step, setStep] = useState<Step>('welcome')
+  const searchParams = useSearchParams()
+  const isTutorialMode = searchParams.get('mode') === 'tutorial'
+  const [step, setStep] = useState<Step>(isTutorialMode ? 'tutorial1' : 'welcome')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // ペット
   const [petName, setPetName] = useState('')
   const [petSpecies, setPetSpecies] = useState('')
   const [petFile, setPetFile] = useState<File | null>(null)
   const [petPreview, setPetPreview] = useState<string | null>(null)
 
-  // 自分の情報
   const [fullName, setFullName] = useState('')
   const [address, setAddress] = useState('')
 
-  // アラート設定
   const [alertEnabled, setAlertEnabled] = useState(false)
   const [alertHours, setAlertHours] = useState<24 | 48>(24)
   const [proxyEmail, setProxyEmail] = useState('')
@@ -119,11 +126,7 @@ export default function OnboardingPage() {
         .eq('user_id', user.id)
         .single()
 
-      const payload = {
-        full_name: fullName,
-        address: address,
-        user_id: user.id,
-      }
+      const payload = { full_name: fullName, address: address, user_id: user.id }
 
       if (existing) {
         await supabase.from('moshimo_info').update(payload).eq('user_id', user.id)
@@ -188,7 +191,6 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* ようこそ */}
       {step === 'welcome' && (
         <div className="flex flex-col items-center justify-center flex-1 px-8 text-center">
           <Image src="/logo.png" alt="もしも手帳" width={220} height={44} className="mb-6" priority />
@@ -207,7 +209,6 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* ペット登録 */}
       {step === 'pet' && (
         <div className="flex flex-col flex-1 px-5 pt-6 pb-10">
           <h2 className="text-xl font-bold text-gray-700 mb-1">うちの子を登録しよう</h2>
@@ -264,7 +265,6 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* 自分の情報 */}
       {step === 'owner' && (
         <div className="flex flex-col flex-1 px-5 pt-6 pb-10">
           <h2 className="text-xl font-bold text-gray-700 mb-1">あなたの情報を登録しよう</h2>
@@ -293,14 +293,11 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* アラート設定 */}
       {step === 'alert' && (
         <div className="flex flex-col flex-1 px-5 pt-6 pb-10">
           <h2 className="text-xl font-bold text-gray-700 mb-1">緊急時のアラート設定</h2>
           <p className="text-sm text-gray-400 mb-6">もしもの時に備えた自動メール通知の設定です</p>
-
           <div className="space-y-4">
-            {/* 時間選択 */}
             <div className="bg-white rounded-2xl border border-gray-100 p-4">
               <p className="text-sm text-gray-600 mb-3">
                 このアプリのペット記録が
@@ -319,7 +316,6 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            {/* オン/オフ */}
             <div className="bg-white rounded-2xl border border-gray-100 p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-bold text-gray-600">アラートを有効にする</span>
@@ -328,7 +324,6 @@ export default function OnboardingPage() {
                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${alertEnabled ? 'translate-x-7' : 'translate-x-1'}`} />
                 </button>
               </div>
-
               {alertEnabled && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <label className="text-xs text-gray-400 block mb-1">緊急連絡先のメールアドレス <span className="text-pink-400">必須</span></label>
@@ -343,7 +338,6 @@ export default function OnboardingPage() {
               ※後から設定を変更することが可能です
             </p>
           </div>
-
           {error && <p className="text-xs text-pink-400 text-center mt-3">{error}</p>}
           <div className="mt-auto pt-6">
             <button onClick={handleAlertSave} disabled={saving}
@@ -354,7 +348,6 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* チュートリアル */}
       {isTutorial && (() => {
         const slide = tutorialSlides[tutorialIndex]
         const nextStep = tutorialSteps[tutorialIndex + 1] ?? 'done' as Step
@@ -395,7 +388,6 @@ export default function OnboardingPage() {
         )
       })()}
 
-      {/* 完了 */}
       {step === 'done' && (
         <div className="flex flex-col items-center justify-center flex-1 px-8 text-center">
           <div className="text-7xl mb-6">🐾</div>
