@@ -171,7 +171,7 @@ export default function CalendarPage() {
           <div className="text-center py-8">
             <p className="text-sm text-gray-400 mb-3">この日の記録はありません</p>
             <button
-              onClick={() => router.push('/record')}
+              onClick={() => router.push(`/record?date=${selectedDate}`)}
               className="text-xs text-[#FFB7C5] border border-pink-200 rounded-full px-4 py-2"
             >
               + 記録を追加
@@ -216,7 +216,7 @@ export default function CalendarPage() {
 
             {pets.filter(p => !selectedRecords.some(r => r.pet_id === p.id)).length > 0 && (
               <button
-                onClick={() => router.push('/record')}
+              onClick={() => router.push(`/record?date=${selectedDate}`)}
                 className="w-full border-2 border-dashed border-pink-200 rounded-2xl py-3 text-sm text-[#FFB7C5] font-medium flex items-center justify-center gap-2"
               >
                 <span className="text-lg">+</span> 他の子の記録を追加

@@ -1,12 +1,11 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import BottomNav from '@/components/BottomNav'
 import type { Pet } from '@/types'
 import { compressImage } from '@/lib/compressImage'
-
 
 const MOODS = [
   { value: 'good', label: '良い', icon: (
@@ -44,12 +43,21 @@ const toLocalDateString = () => {
 }
 
 export default function RecordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FFFBFC]" />}>
+      <RecordPageInner />
+    </Suspense>
+  )
+}
+
+function RecordPageInner() {
   const { user } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [pets, setPets] = useState<Pet[]>([])
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
   const [extraPetIds, setExtraPetIds] = useState<string[]>([])
-  const [date, setDate] = useState(toLocalDateString())
+  const [date, setDate] = useState(() => searchParams.get('date') || toLocalDateString())
   const [mood, setMood] = useState<'good' | 'normal' | 'bad' | null>(null)
   const [memo, setMemo] = useState('')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -97,7 +105,6 @@ export default function RecordPage() {
           image_url = data.publicUrl
         }
       }
-
       const { error } = await supabase.from('pet_records').insert({
         user_id: user.id,
         pet_id: selectedPet.id,
@@ -136,7 +143,6 @@ export default function RecordPage() {
         </div>
       )}
 
-      {/* ペット選択 */}
       {pets.length > 1 && (
         <div className="flex gap-3 px-5 mt-3 overflow-x-auto">
           {pets.map(pet => (
@@ -166,7 +172,6 @@ export default function RecordPage() {
       )}
 
       <div className="px-5 py-4 space-y-4">
-        {/* 日付 */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <label className="text-sm font-bold text-gray-600 block mb-2">記録する日</label>
           <div className="flex items-center gap-2 text-gray-600">
@@ -186,7 +191,6 @@ export default function RecordPage() {
           </div>
         </div>
 
-        {/* ごきげん */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <div className="flex items-center justify-between mb-3">
             <label className="text-sm font-bold text-gray-600">今日のごきげん</label>
@@ -210,7 +214,6 @@ export default function RecordPage() {
           </div>
         </div>
 
-        {/* メモ */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <label className="text-sm font-bold text-gray-600 block mb-2">メモ</label>
           <textarea
@@ -222,7 +225,6 @@ export default function RecordPage() {
           />
         </div>
 
-        {/* 写真 */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <label className="text-sm font-bold text-gray-600 block mb-2">今日の写真</label>
           <label className="cursor-pointer block">
@@ -240,7 +242,6 @@ export default function RecordPage() {
             <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
           </label>
 
-          {/* 他の子タグ（常に表示・ペットが2匹以上の場合） */}
           {otherPets.length > 0 && (
             <div className="mt-3 pt-3 border-t border-gray-100">
               <p className="text-xs text-gray-400 mb-2">📷 写真に他の子も写ってますか？</p>
