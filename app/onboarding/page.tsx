@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import Image from 'next/image'
 
-const STEPS = ['welcome', 'pet', 'owner', 'moshimo', 'tutorial1', 'tutorial2', 'tutorial3', 'tutorial4', 'done'] as const
+const STEPS = ['welcome', 'pet', 'owner', 'alert', 'tutorial1', 'tutorial2', 'tutorial3', 'tutorial4', 'done'] as const
 type Step = typeof STEPS[number]
 
 const tutorialSlides = [
@@ -41,21 +41,21 @@ export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>('welcome')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
+  // ペット
   const [petName, setPetName] = useState('')
   const [petSpecies, setPetSpecies] = useState('')
   const [petFile, setPetFile] = useState<File | null>(null)
   const [petPreview, setPetPreview] = useState<string | null>(null)
 
+  // 自分の情報
   const [fullName, setFullName] = useState('')
   const [address, setAddress] = useState('')
-  const [keyLocation, setKeyLocation] = useState('')
-  const [hospitalName, setHospitalName] = useState('')
-  const [hospitalPhone, setHospitalPhone] = useState('')
-  const [message, setMessage] = useState('')
 
-  const [proxyName, setProxyName] = useState('')
-  const [proxyPhone, setProxyPhone] = useState('')
+  // アラート設定
+  const [alertEnabled, setAlertEnabled] = useState(false)
+  const [alertHours, setAlertHours] = useState<24 | 48>(24)
   const [proxyEmail, setProxyEmail] = useState('')
 
   const completeOnboarding = async () => {
@@ -78,7 +78,8 @@ export default function OnboardingPage() {
   }
 
   const handlePetSave = async () => {
-    if (!petName) { setStep('owner'); return }
+    if (!petName) { setError('名前を入力してください'); return }
+    setError('')
     if (!user) return
     setSaving(true)
     try {
@@ -105,9 +106,11 @@ export default function OnboardingPage() {
     }
   }
 
-  const handleOwnerSave = async (skip = false) => {
+  const handleOwnerSave = async () => {
+    if (!fullName) { setError('氏名を入力してください'); return }
+    if (!address) { setError('住所を入力してください'); return }
+    setError('')
     if (!user) return
-    if (skip) { setStep('moshimo'); return }
     setSaving(true)
     try {
       const { data: existing } = await supabase
@@ -117,12 +120,8 @@ export default function OnboardingPage() {
         .single()
 
       const payload = {
-        full_name: fullName || null,
-        address: address || null,
-        key_location: keyLocation || null,
-        hospital_name: hospitalName || null,
-        hospital_phone: hospitalPhone || null,
-        message: message || null,
+        full_name: fullName,
+        address: address,
         user_id: user.id,
       }
 
@@ -133,13 +132,17 @@ export default function OnboardingPage() {
       }
     } finally {
       setSaving(false)
-      setStep('moshimo')
+      setStep('alert')
     }
   }
 
-  const handleMoshimoSave = async (skip = false) => {
+  const handleAlertSave = async () => {
+    if (alertEnabled && !proxyEmail) {
+      setError('アラートをオンにする場合はメールアドレスを入力してください')
+      return
+    }
+    setError('')
     if (!user) return
-    if (skip) { setStep('tutorial1'); return }
     setSaving(true)
     try {
       const { data: existing } = await supabase
@@ -149,8 +152,8 @@ export default function OnboardingPage() {
         .single()
 
       const payload = {
-        proxy_name: proxyName || null,
-        proxy_phone: proxyPhone || null,
+        alert_enabled: alertEnabled,
+        alert_hours: alertHours,
         proxy_email: proxyEmail || null,
         user_id: user.id,
       }
@@ -166,9 +169,8 @@ export default function OnboardingPage() {
     }
   }
 
-  const progressSteps: Step[] = ['pet', 'owner', 'moshimo']
+  const progressSteps: Step[] = ['pet', 'owner', 'alert']
   const currentProgressIndex = progressSteps.indexOf(step)
-
   const tutorialSteps: Step[] = ['tutorial1', 'tutorial2', 'tutorial3', 'tutorial4']
   const isTutorial = tutorialSteps.includes(step)
   const tutorialIndex = tutorialSteps.indexOf(step)
@@ -186,10 +188,11 @@ export default function OnboardingPage() {
         </div>
       )}
 
+      {/* ようこそ */}
       {step === 'welcome' && (
         <div className="flex flex-col items-center justify-center flex-1 px-8 text-center">
           <Image src="/logo.png" alt="もしも手帳" width={220} height={44} className="mb-6" priority />
-          <Image src="/main.png" alt="猫" width={180} height={180} className="mb-8" />
+          <Image src="/main.png" alt="ペット" width={180} height={180} className="mb-8" />
           <h1 className="text-xl font-bold text-gray-700 mb-4">ようこそ！</h1>
           <p className="text-sm text-gray-500 leading-relaxed mb-3">
             このアプリは、飼い主に万が一のことがあった際に<strong>ペットを守るための備え</strong>です。
@@ -198,19 +201,17 @@ export default function OnboardingPage() {
             毎日の健康記録を続けることで、24〜48時間以内に生存確認が取れなかった場合、登録した代理人へ自動的に情報が共有されます。
           </p>
           <button onClick={() => setStep('pet')}
-            className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base mb-3">
+            className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base">
             はじめる
-          </button>
-          <button onClick={completeOnboarding} className="text-sm text-gray-400 py-2">
-            後でする
           </button>
         </div>
       )}
 
+      {/* ペット登録 */}
       {step === 'pet' && (
         <div className="flex flex-col flex-1 px-5 pt-6 pb-10">
           <h2 className="text-xl font-bold text-gray-700 mb-1">うちの子を登録しよう</h2>
-          <p className="text-sm text-gray-400 mb-6">あとで追加・編集できます（2匹目以降も後から追加できます）</p>
+          <p className="text-sm text-gray-400 mb-6">2匹目以降は後から追加できます</p>
           <div className="flex justify-center mb-5">
             <label className="cursor-pointer">
               <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-pink-100 bg-pink-50">
@@ -236,8 +237,8 @@ export default function OnboardingPage() {
           </div>
           <div className="space-y-3">
             <div className="bg-white rounded-2xl border border-gray-100 px-4 py-3">
-              <label className="text-xs text-gray-400 block mb-1">名前</label>
-              <input type="text" value={petName} onChange={e => setPetName(e.target.value)}
+              <label className="text-xs text-gray-400 block mb-1">名前 <span className="text-pink-400">必須</span></label>
+              <input type="text" value={petName} onChange={e => { setPetName(e.target.value); setError('') }}
                 placeholder="しらす"
                 className="w-full text-sm text-gray-700 bg-transparent focus:outline-none" />
             </div>
@@ -253,87 +254,107 @@ export default function OnboardingPage() {
               </div>
             </div>
           </div>
-          <div className="mt-auto pt-8 space-y-3">
+          {error && <p className="text-xs text-pink-400 text-center mt-3">{error}</p>}
+          <div className="mt-auto pt-8">
             <button onClick={handlePetSave} disabled={saving}
               className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base disabled:opacity-50">
               {saving ? '登録中...' : '次へ'}
-            </button>
-            <button onClick={() => setStep('owner')} className="w-full text-sm text-gray-400 py-2">
-              後で登録する
             </button>
           </div>
         </div>
       )}
 
+      {/* 自分の情報 */}
       {step === 'owner' && (
         <div className="flex flex-col flex-1 px-5 pt-6 pb-10">
           <h2 className="text-xl font-bold text-gray-700 mb-1">あなたの情報を登録しよう</h2>
           <p className="text-sm text-gray-400 mb-5">もしもの時に代理人が参照する情報です</p>
           <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
-            {[
-              { label: '氏名', value: fullName, set: setFullName, placeholder: '山田 花子', type: 'text' },
-              { label: '住所', value: address, set: setAddress, placeholder: '東京都渋谷区...', type: 'text' },
-              { label: '鍵の場所', value: keyLocation, set: setKeyLocation, placeholder: '玄関右の植木鉢の下', type: 'text' },
-              { label: 'かかりつけ医', value: hospitalName, set: setHospitalName, placeholder: 'にじいろ動物病院', type: 'text' },
-              { label: 'かかりつけ医の電話', value: hospitalPhone, set: setHospitalPhone, placeholder: '03-1234-5678', type: 'tel' },
-            ].map(item => (
-              <div key={item.label} className="px-4 py-3">
-                <label className="text-xs text-gray-400 block mb-1">{item.label}</label>
-                <input type={item.type} value={item.value} onChange={e => item.set(e.target.value)}
-                  placeholder={item.placeholder}
-                  className="w-full text-sm text-gray-700 bg-transparent focus:outline-none" />
-              </div>
-            ))}
             <div className="px-4 py-3">
-              <label className="text-xs text-gray-400 block mb-1">緊急時のメッセージ</label>
-              <textarea value={message} onChange={e => setMessage(e.target.value)}
-                placeholder="ご飯は朝晩1回ずつ。優しく接してください。"
-                rows={3}
-                className="w-full text-sm text-gray-700 bg-transparent focus:outline-none resize-none" />
+              <label className="text-xs text-gray-400 block mb-1">氏名 <span className="text-pink-400">必須</span></label>
+              <input type="text" value={fullName} onChange={e => { setFullName(e.target.value); setError('') }}
+                placeholder="山田 花子"
+                className="w-full text-sm text-gray-700 bg-transparent focus:outline-none" />
+            </div>
+            <div className="px-4 py-3">
+              <label className="text-xs text-gray-400 block mb-1">住所 <span className="text-pink-400">必須</span></label>
+              <input type="text" value={address} onChange={e => { setAddress(e.target.value); setError('') }}
+                placeholder="東京都渋谷区..."
+                className="w-full text-sm text-gray-700 bg-transparent focus:outline-none" />
             </div>
           </div>
-          <div className="mt-auto pt-6 space-y-3">
-            <button onClick={() => handleOwnerSave(false)} disabled={saving}
+          {error && <p className="text-xs text-pink-400 text-center mt-3">{error}</p>}
+          <div className="mt-auto pt-6">
+            <button onClick={handleOwnerSave} disabled={saving}
               className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base disabled:opacity-50">
               {saving ? '保存中...' : '次へ'}
-            </button>
-            <button onClick={() => handleOwnerSave(true)} className="w-full text-sm text-gray-400 py-2">
-              後で登録する
             </button>
           </div>
         </div>
       )}
 
-      {step === 'moshimo' && (
+      {/* アラート設定 */}
+      {step === 'alert' && (
         <div className="flex flex-col flex-1 px-5 pt-6 pb-10">
-          <h2 className="text-xl font-bold text-gray-700 mb-1">緊急連絡先を登録しよう</h2>
-          <p className="text-sm text-gray-400 mb-5">もしもの時に連絡する方の情報を登録してください</p>
-          <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
-            {[
-              { label: '名前', value: proxyName, set: setProxyName, placeholder: '佐藤 太郎', type: 'text' },
-              { label: '電話番号', value: proxyPhone, set: setProxyPhone, placeholder: '090-0000-0000', type: 'tel' },
-              { label: 'メールアドレス', value: proxyEmail, set: setProxyEmail, placeholder: 'taro@example.com', type: 'email' },
-            ].map(item => (
-              <div key={item.label} className="px-4 py-3">
-                <label className="text-xs text-gray-400 block mb-1">{item.label}</label>
-                <input type={item.type} value={item.value} onChange={e => item.set(e.target.value)}
-                  placeholder={item.placeholder}
-                  className="w-full text-sm text-gray-700 bg-transparent focus:outline-none" />
+          <h2 className="text-xl font-bold text-gray-700 mb-1">緊急時のアラート設定</h2>
+          <p className="text-sm text-gray-400 mb-6">もしもの時に備えた自動メール通知の設定です</p>
+
+          <div className="space-y-4">
+            {/* 時間選択 */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <p className="text-sm text-gray-600 mb-3">
+                このアプリのペット記録が
+                <span className="text-[#FFB7C5] font-bold mx-1">{alertHours}時間</span>
+                押されなかった場合、緊急連絡先にメールが届きます。
+              </p>
+              <div className="flex gap-3">
+                {([24, 48] as const).map(h => (
+                  <button key={h} onClick={() => setAlertHours(h)}
+                    className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold transition-all ${
+                      alertHours === h ? 'bg-[#FFB7C5] border-[#FFB7C5] text-white' : 'bg-white border-gray-200 text-gray-500'
+                    }`}>
+                    {h}時間
+                  </button>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* オン/オフ */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-bold text-gray-600">アラートを有効にする</span>
+                <button onClick={() => { setAlertEnabled(!alertEnabled); setError('') }}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${alertEnabled ? 'bg-[#FFB7C5]' : 'bg-gray-200'}`}>
+                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${alertEnabled ? 'translate-x-7' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              {alertEnabled && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <label className="text-xs text-gray-400 block mb-1">緊急連絡先のメールアドレス <span className="text-pink-400">必須</span></label>
+                  <input type="email" value={proxyEmail} onChange={e => { setProxyEmail(e.target.value); setError('') }}
+                    placeholder="taro@example.com"
+                    className="w-full text-sm text-gray-700 bg-gray-50 rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-pink-200" />
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-400 text-center px-4">
+              ※後から設定を変更することが可能です
+            </p>
           </div>
-          <div className="mt-auto pt-6 space-y-3">
-            <button onClick={() => handleMoshimoSave(false)} disabled={saving}
+
+          {error && <p className="text-xs text-pink-400 text-center mt-3">{error}</p>}
+          <div className="mt-auto pt-6">
+            <button onClick={handleAlertSave} disabled={saving}
               className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base disabled:opacity-50">
               {saving ? '保存中...' : '次へ'}
-            </button>
-            <button onClick={() => handleMoshimoSave(true)} className="w-full text-sm text-gray-400 py-2">
-              後で登録する
             </button>
           </div>
         </div>
       )}
 
+      {/* チュートリアル */}
       {isTutorial && (() => {
         const slide = tutorialSlides[tutorialIndex]
         const nextStep = tutorialSteps[tutorialIndex + 1] ?? 'done' as Step
@@ -369,14 +390,12 @@ export default function OnboardingPage() {
                   </svg>
                 )}
               </button>
-              <button onClick={completeOnboarding} className="text-sm text-gray-400 py-3 mt-1 w-full">
-                スキップ
-              </button>
             </div>
           </div>
         )
       })()}
 
+      {/* 完了 */}
       {step === 'done' && (
         <div className="flex flex-col items-center justify-center flex-1 px-8 text-center">
           <div className="text-7xl mb-6">🐾</div>
