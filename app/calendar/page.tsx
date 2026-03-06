@@ -74,7 +74,19 @@ export default function CalendarPage() {
   }, [user, year, month])
 
   const datesWithRecords = new Set(records.map(r => r.date))
+
+  // 誕生日の日付セットを作成（今表示中の月・年に合わせる）
+  const birthdayMap: Record<string, string[]> = {}
+  pets.forEach(pet => {
+    if (pet.birth_month === (month + 1) && pet.birth_day) {
+      const dateStr = toDateStr(year, month, pet.birth_day)
+      if (!birthdayMap[dateStr]) birthdayMap[dateStr] = []
+      birthdayMap[dateStr].push(pet.name)
+    }
+  })
+
   const selectedRecords = records.filter(r => r.date === selectedDate)
+  const selectedBirthdays = birthdayMap[selectedDate] ?? []
 
   const firstDay = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -134,6 +146,7 @@ export default function CalendarPage() {
             const isToday = dateStr === today
             const isSelected = dateStr === selectedDate
             const hasRecord = datesWithRecords.has(dateStr)
+            const hasBirthday = !!birthdayMap[dateStr]
             const dow = (firstDay + i) % 7
 
             return (
@@ -148,10 +161,11 @@ export default function CalendarPage() {
                   dow === 6 ? 'text-blue-400' :
                   'text-gray-600'
                 }`}>{day}</span>
-                {hasRecord
-                  ? <div className="w-1.5 h-1.5 rounded-full bg-[#FFB7C5] mt-0.5" />
-                  : <div className="w-1.5 h-1.5 mt-0.5" />
-                }
+                <div className="flex gap-0.5 mt-0.5 h-2 items-center">
+                  {hasRecord && <div className="w-1.5 h-1.5 rounded-full bg-[#FFB7C5]" />}
+                  {hasBirthday && <span className="text-xs leading-none">🐾</span>}
+                  {!hasRecord && !hasBirthday && <div className="w-1.5 h-1.5" />}
+                </div>
               </button>
             )
           })}
@@ -166,6 +180,16 @@ export default function CalendarPage() {
             <span className="text-xs text-gray-400">{selectedRecords.length}件</span>
           )}
         </div>
+
+        {/* 誕生日バナー */}
+        {selectedBirthdays.length > 0 && (
+          <div className="bg-pink-50 border border-pink-100 rounded-2xl px-4 py-3 mb-3 flex items-center gap-2">
+            <span className="text-xl">🐾</span>
+            <p className="text-sm text-[#FFB7C5] font-bold">
+              {selectedBirthdays.join('と')}のお誕生日！
+            </p>
+          </div>
+        )}
 
         {selectedRecords.length === 0 ? (
           <div className="text-center py-8">
@@ -189,7 +213,6 @@ export default function CalendarPage() {
                   className="w-full bg-white rounded-2xl border border-gray-100 p-4 text-left"
                 >
                   <div className="flex items-start gap-3">
-                    {/* サムネイル：記録写真 > ペット写真 */}
                     <div className="w-14 h-14 rounded-xl overflow-hidden bg-pink-50 shrink-0">
                       {thumbUrl ? (
                         <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
@@ -216,7 +239,7 @@ export default function CalendarPage() {
 
             {pets.filter(p => !selectedRecords.some(r => r.pet_id === p.id)).length > 0 && (
               <button
-              onClick={() => router.push(`/record?date=${selectedDate}`)}
+                onClick={() => router.push(`/record?date=${selectedDate}`)}
                 className="w-full border-2 border-dashed border-pink-200 rounded-2xl py-3 text-sm text-[#FFB7C5] font-medium flex items-center justify-center gap-2"
               >
                 <span className="text-lg">+</span> 他の子の記録を追加
