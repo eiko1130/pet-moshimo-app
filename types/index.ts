@@ -5,6 +5,7 @@ export type Pet = {
   species: string | null
   birth_year: number | null
   birth_month: number | null
+  birth_day: number | null
   photo_url: string | null
   image_url: string | null
   vaccine_info: string | null
