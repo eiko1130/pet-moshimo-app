@@ -1,10 +1,40 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import BottomNav from '@/components/BottomNav'
 import { compressImage } from '@/lib/compressImage'
+import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop'
+import 'react-image-crop/dist/ReactCrop.css'
+
+function centerAspectCrop(mediaWidth: number, mediaHeight: number) {
+  return centerCrop(
+    makeAspectCrop({ unit: '%', width: 80 }, 1, mediaWidth, mediaHeight),
+    mediaWidth,
+    mediaHeight
+  )
+}
+
+async function getCroppedImg(image: HTMLImageElement, crop: PixelCrop): Promise<File> {
+  const canvas = document.createElement('canvas')
+  const scaleX = image.naturalWidth / image.width
+  const scaleY = image.naturalHeight / image.height
+  canvas.width = crop.width
+  canvas.height = crop.height
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(
+    image,
+    crop.x * scaleX, crop.y * scaleY,
+    crop.width * scaleX, crop.height * scaleY,
+    0, 0, crop.width, crop.height
+  )
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve(new File([blob!], 'cropped.jpg', { type: 'image/jpeg' }))
+    }, 'image/jpeg', 0.9)
+  })
+}
 
 export default function NewPetPage() {
   const { user } = useAuth()
@@ -18,11 +48,31 @@ export default function NewPetPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
+  // トリミング関連
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [crop, setCrop] = useState<Crop>()
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
+  const imgRef = useRef<HTMLImageElement>(null)
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    setPhotoFile(file)
-    setPhotoPreview(URL.createObjectURL(file))
+    const reader = new FileReader()
+    reader.onload = () => setCropSrc(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget
+    setCrop(centerAspectCrop(width, height))
+  }
+
+  const handleCropDone = async () => {
+    if (!imgRef.current || !completedCrop) return
+    const croppedFile = await getCroppedImg(imgRef.current, completedCrop)
+    setPhotoFile(croppedFile)
+    setPhotoPreview(URL.createObjectURL(croppedFile))
+    setCropSrc(null)
   }
 
   const handleSubmit = async () => {
@@ -51,6 +101,7 @@ export default function NewPetPage() {
         species,
         birth_year: birthday ? parseInt(birthday.split('-')[0]) : null,
         birth_month: birthday ? parseInt(birthday.split('-')[1]) : null,
+        birth_day: birthday ? parseInt(birthday.split('-')[2]) : null,
         notes: notes || null,
         image_url,
       })
@@ -73,6 +124,41 @@ export default function NewPetPage() {
         </button>
         <span className="text-lg font-bold">ペットを追加</span>
       </header>
+
+      {/* トリミング画面 */}
+      {cropSrc && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex flex-col items-center justify-center p-4">
+          <p className="text-white text-sm mb-4 font-bold">ペットの顔が中心に来るように調整してください</p>
+          <ReactCrop
+            crop={crop}
+            onChange={(c) => setCrop(c)}
+            onComplete={(c) => setCompletedCrop(c)}
+            aspect={1}
+            circularCrop
+          >
+            <img
+              ref={imgRef}
+              src={cropSrc}
+              onLoad={onImageLoad}
+              className="max-h-[60vh] max-w-full"
+            />
+          </ReactCrop>
+          <div className="flex gap-3 mt-6 w-full max-w-xs">
+            <button
+              onClick={() => setCropSrc(null)}
+              className="flex-1 bg-white text-gray-600 font-bold py-3 rounded-2xl text-sm"
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={handleCropDone}
+              className="flex-1 bg-[#FFB7C5] text-white font-bold py-3 rounded-2xl text-sm"
+            >
+              決定
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="px-5 py-6 space-y-4">
         <div className="flex justify-center">
