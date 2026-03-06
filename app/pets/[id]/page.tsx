@@ -1,12 +1,41 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
 import { compressImage } from '@/lib/compressImage'
-
+import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop'
+import 'react-image-crop/dist/ReactCrop.css'
 
 const SPECIES_OPTIONS = ['猫', '犬', 'その他']
+
+function centerAspectCrop(mediaWidth: number, mediaHeight: number) {
+  return centerCrop(
+    makeAspectCrop({ unit: '%', width: 80 }, 1, mediaWidth, mediaHeight),
+    mediaWidth,
+    mediaHeight
+  )
+}
+
+async function getCroppedImg(image: HTMLImageElement, crop: PixelCrop): Promise<File> {
+  const canvas = document.createElement('canvas')
+  const scaleX = image.naturalWidth / image.width
+  const scaleY = image.naturalHeight / image.height
+  canvas.width = crop.width
+  canvas.height = crop.height
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(
+    image,
+    crop.x * scaleX, crop.y * scaleY,
+    crop.width * scaleX, crop.height * scaleY,
+    0, 0, crop.width, crop.height
+  )
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      resolve(new File([blob!], 'cropped.jpg', { type: 'image/jpeg' }))
+    }, 'image/jpeg', 0.9)
+  })
+}
 
 export default function PetDetailPage() {
   const { user } = useAuth()
@@ -21,11 +50,18 @@ export default function PetDetailPage() {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
 
+  // トリミング関連
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [crop, setCrop] = useState<Crop>()
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
+  const imgRef = useRef<HTMLImageElement>(null)
+
   const [form, setForm] = useState({
     name: '',
     species: '',
     birth_year: '',
     birth_month: '',
+    birth_day: '',
     vaccine_info: '',
     insurance_info: '',
     pet_message: '',
@@ -41,6 +77,7 @@ export default function PetDetailPage() {
         species: data.species ?? '',
         birth_year: data.birth_year ? String(data.birth_year) : '',
         birth_month: data.birth_month ? String(data.birth_month) : '',
+        birth_day: data.birth_day ? String(data.birth_day) : '',
         vaccine_info: data.vaccine_info ?? '',
         insurance_info: data.insurance_info ?? '',
         pet_message: data.pet_message ?? '',
@@ -52,6 +89,19 @@ export default function PetDetailPage() {
   }, [user, id])
 
   const set = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }))
+
+  const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget
+    setCrop(centerAspectCrop(width, height))
+  }
+
+  const handleCropDone = async () => {
+    if (!imgRef.current || !completedCrop) return
+    const croppedFile = await getCroppedImg(imgRef.current, completedCrop)
+    setPhotoFile(croppedFile)
+    setPhotoPreview(URL.createObjectURL(croppedFile))
+    setCropSrc(null)
+  }
 
   const handleSave = async () => {
     if (!user) return
@@ -73,6 +123,7 @@ export default function PetDetailPage() {
         species: form.species || null,
         birth_year: form.birth_year ? parseInt(form.birth_year) : null,
         birth_month: form.birth_month ? parseInt(form.birth_month) : null,
+        birth_day: form.birth_day ? parseInt(form.birth_day) : null,
         vaccine_info: form.vaccine_info || null,
         insurance_info: form.insurance_info || null,
         pet_message: form.pet_message || null,
@@ -99,6 +150,7 @@ export default function PetDetailPage() {
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 30 }, (_, i) => currentYear - i)
   const months = Array.from({ length: 12 }, (_, i) => i + 1)
+  const days = Array.from({ length: 31 }, (_, i) => i + 1)
 
   if (loading) return (
     <div className="min-h-screen bg-[#FFFBFC] flex items-center justify-center">
@@ -108,6 +160,42 @@ export default function PetDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#FFFBFC] pb-10">
+
+      {/* トリミング画面 */}
+      {cropSrc && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex flex-col items-center justify-center p-4">
+          <p className="text-white text-sm mb-4 font-bold">ペットの顔が中心に来るように調整してください</p>
+          <ReactCrop
+            crop={crop}
+            onChange={(c) => setCrop(c)}
+            onComplete={(c) => setCompletedCrop(c)}
+            aspect={1}
+            circularCrop
+          >
+            <img
+              ref={imgRef}
+              src={cropSrc}
+              onLoad={onImageLoad}
+              className="max-h-[60vh] max-w-full"
+            />
+          </ReactCrop>
+          <div className="flex gap-3 mt-6 w-full max-w-xs">
+            <button
+              onClick={() => setCropSrc(null)}
+              className="flex-1 bg-white text-gray-600 font-bold py-3 rounded-2xl text-sm"
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={handleCropDone}
+              className="flex-1 bg-[#FFB7C5] text-white font-bold py-3 rounded-2xl text-sm"
+            >
+              決定
+            </button>
+          </div>
+        </div>
+      )}
+
       <header className="bg-[#FFB7C5] text-white flex items-center justify-between px-4 py-4">
         <button onClick={() => router.back()}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-6 h-6">
@@ -147,7 +235,10 @@ export default function PetDetailPage() {
               <input type="file" accept="image/*" className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0]
-                  if (f) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)) }
+                  if (!f) return
+                  const reader = new FileReader()
+                  reader.onload = () => setCropSrc(reader.result as string)
+                  reader.readAsDataURL(f)
                 }}
               />
             )}
@@ -158,39 +249,26 @@ export default function PetDetailPage() {
         <section>
           <h2 className="text-sm font-bold text-[#FFB7C5] mb-3">基本情報</h2>
           <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
-            {/* 名前 */}
             <div className="px-4 py-3">
               <label className="text-xs text-gray-400 block mb-1">名前</label>
               {editing ? (
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={e => set('name', e.target.value)}
+                <input type="text" value={form.name} onChange={e => set('name', e.target.value)}
                   placeholder="しらす"
-                  className="w-full text-sm text-gray-700 bg-transparent focus:outline-none"
-                />
+                  className="w-full text-sm text-gray-700 bg-transparent focus:outline-none" />
               ) : (
                 <p className="text-sm text-gray-700">{form.name || <span className="text-gray-300">未設定</span>}</p>
               )}
             </div>
 
-            {/* 種類 */}
             <div className="px-4 py-3">
               <label className="text-xs text-gray-400 block mb-1">種類</label>
               {editing ? (
                 <div className="flex gap-2 mt-1">
                   {SPECIES_OPTIONS.map(s => (
-                    <button
-                      key={s}
-                      onClick={() => set('species', s)}
+                    <button key={s} onClick={() => set('species', s)}
                       className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                        form.species === s
-                          ? 'bg-[#FFB7C5] border-[#FFB7C5] text-white'
-                          : 'bg-white border-gray-200 text-gray-500'
-                      }`}
-                    >
-                      {s}
-                    </button>
+                        form.species === s ? 'bg-[#FFB7C5] border-[#FFB7C5] text-white' : 'bg-white border-gray-200 text-gray-500'
+                      }`}>{s}</button>
                   ))}
                 </div>
               ) : (
@@ -198,37 +276,34 @@ export default function PetDetailPage() {
               )}
             </div>
 
-            {/* 誕生日 */}
             <div className="px-4 py-3">
               <label className="text-xs text-gray-400 block mb-1">誕生日</label>
               {editing ? (
                 <div className="space-y-2">
                   <p className="text-xs text-gray-400">正確な誕生日がわからない場合はおおよその生年だけ入れてください</p>
-                  <div className="flex gap-2 items-center">
-                    <select
-                      value={form.birth_year}
-                      onChange={e => set('birth_year', e.target.value)}
-                      className="text-sm text-gray-700 bg-gray-50 rounded-lg px-2 py-1.5 focus:outline-none"
-                    >
+                  <div className="flex gap-2 items-center flex-wrap">
+                    <select value={form.birth_year} onChange={e => set('birth_year', e.target.value)}
+                      className="text-sm text-gray-700 bg-gray-50 rounded-lg px-2 py-1.5 focus:outline-none">
                       <option value="">年</option>
                       {years.map(y => <option key={y} value={y}>{y}年</option>)}
                     </select>
-                    <select
-                      value={form.birth_month}
-                      onChange={e => set('birth_month', e.target.value)}
-                      className="text-sm text-gray-700 bg-gray-50 rounded-lg px-2 py-1.5 focus:outline-none"
-                    >
-                      <option value="">月（不明）</option>
+                    <select value={form.birth_month} onChange={e => set('birth_month', e.target.value)}
+                      className="text-sm text-gray-700 bg-gray-50 rounded-lg px-2 py-1.5 focus:outline-none">
+                      <option value="">月</option>
                       {months.map(m => <option key={m} value={m}>{m}月</option>)}
+                    </select>
+                    <select value={form.birth_day} onChange={e => set('birth_day', e.target.value)}
+                      className="text-sm text-gray-700 bg-gray-50 rounded-lg px-2 py-1.5 focus:outline-none">
+                      <option value="">日</option>
+                      {days.map(d => <option key={d} value={d}>{d}日</option>)}
                     </select>
                   </div>
                 </div>
               ) : (
                 <p className="text-sm text-gray-700">
                   {form.birth_year
-                    ? `${form.birth_year}年${form.birth_month ? `${form.birth_month}月` : '（月不明）'}`
-                    : <span className="text-gray-300">未設定</span>
-                  }
+                    ? `${form.birth_year}年${form.birth_month ? `${form.birth_month}月` : ''}${form.birth_day ? `${form.birth_day}日` : ''}`
+                    : <span className="text-gray-300">未設定</span>}
                 </p>
               )}
             </div>
@@ -246,13 +321,10 @@ export default function PetDetailPage() {
               <div key={item.key} className="px-4 py-3">
                 <label className="text-xs text-gray-400 block mb-1">{item.label}</label>
                 {editing ? (
-                  <input
-                    type="text"
-                    value={form[item.key as keyof typeof form]}
+                  <input type="text" value={form[item.key as keyof typeof form]}
                     onChange={e => set(item.key, e.target.value)}
                     placeholder={item.placeholder}
-                    className="w-full text-sm text-gray-700 bg-transparent focus:outline-none"
-                  />
+                    className="w-full text-sm text-gray-700 bg-transparent focus:outline-none" />
                 ) : (
                   <p className="text-sm text-gray-700">{form[item.key as keyof typeof form] || <span className="text-gray-300">未設定</span>}</p>
                 )}
@@ -268,13 +340,10 @@ export default function PetDetailPage() {
             <div className="px-4 py-3">
               <label className="text-xs text-gray-400 block mb-1">この子についての伝言</label>
               {editing ? (
-                <textarea
-                  value={form.pet_message}
-                  onChange={e => set('pet_message', e.target.value)}
+                <textarea value={form.pet_message} onChange={e => set('pet_message', e.target.value)}
                   placeholder="ご飯は朝晩1回ずつ。ビビりなので優しく接してください。"
                   rows={4}
-                  className="w-full text-sm text-gray-700 bg-transparent focus:outline-none resize-none"
-                />
+                  className="w-full text-sm text-gray-700 bg-transparent focus:outline-none resize-none" />
               ) : (
                 <p className="text-sm text-gray-700 whitespace-pre-wrap">{form.pet_message || <span className="text-gray-300">未設定</span>}</p>
               )}
@@ -288,13 +357,10 @@ export default function PetDetailPage() {
           <div className="bg-white rounded-2xl border border-gray-100">
             <div className="px-4 py-3">
               {editing ? (
-                <textarea
-                  value={form.notes}
-                  onChange={e => set('notes', e.target.value)}
+                <textarea value={form.notes} onChange={e => set('notes', e.target.value)}
                   placeholder="その他気になること"
                   rows={3}
-                  className="w-full text-sm text-gray-700 bg-transparent focus:outline-none resize-none"
-                />
+                  className="w-full text-sm text-gray-700 bg-transparent focus:outline-none resize-none" />
               ) : (
                 <p className="text-sm text-gray-700 whitespace-pre-wrap">{form.notes || <span className="text-gray-300">未設定</span>}</p>
               )}
@@ -309,19 +375,14 @@ export default function PetDetailPage() {
         )}
 
         {editing && (
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base disabled:opacity-50"
-          >
+          <button onClick={handleSave} disabled={saving}
+            className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base disabled:opacity-50">
             {saving ? '保存中...' : '保存する'}
           </button>
         )}
 
-        <button
-          onClick={handleDelete}
-          className="w-full text-red-400 text-sm py-3 border border-red-100 rounded-2xl"
-        >
+        <button onClick={handleDelete}
+          className="w-full text-red-400 text-sm py-3 border border-red-100 rounded-2xl">
           このペットを削除する
         </button>
       </div>
