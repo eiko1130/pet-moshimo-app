@@ -91,6 +91,10 @@ function RecordPageInner() {
       setMessage('ごきげんを選んでください')
       return
     }
+    if (date > toLocalDateString()) {
+      setMessage('未来の日付には記録できません')
+      return
+    }
     setLoading(true)
     try {
       let image_url = null
