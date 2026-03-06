@@ -49,7 +49,8 @@ export default function NewPetPage() {
         user_id: user.id,
         name,
         species,
-        birthday: birthday || null,
+        birth_year: birthday ? parseInt(birthday.split('-')[0]) : null,
+        birth_month: birthday ? parseInt(birthday.split('-')[1]) : null,
         notes: notes || null,
         image_url,
       })
