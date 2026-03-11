@@ -16,6 +16,10 @@ export default function ContactsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [showInvite, setShowInvite] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteSending, setInviteSending] = useState(false)
+  const [inviteMessage, setInviteMessage] = useState('')
 
   useEffect(() => {
     if (!user) return
@@ -51,6 +55,11 @@ export default function ContactsPage() {
           .single()
         if (error) throw error
         setContacts(cs => [...cs, data])
+        // メールアドレスがあれば招待バナーを表示
+        if (editing.email) {
+          setInviteEmail(editing.email)
+          setShowInvite(true)
+        }
       }
       setEditing(EMPTY)
       setEditingId(null)
@@ -68,6 +77,37 @@ export default function ContactsPage() {
     setContacts(cs => cs.filter(c => c.id !== id))
   }
 
+  const handleSendInvite = async () => {
+    if (!user || !inviteEmail) return
+    setInviteSending(true)
+    try {
+      const res = await fetch(
+        'https://nukpisixfolbnzkvorym.supabase.co/functions/v1/send-invite',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            inviter_user_id: user.id,
+            proxy_email: inviteEmail,
+          }),
+        }
+      )
+      if (!res.ok) throw new Error('送信に失敗しました')
+      setInviteMessage('招待メールを送信しました！')
+      setTimeout(() => {
+        setShowInvite(false)
+        setInviteMessage('')
+      }, 2000)
+    } catch (e: any) {
+      setInviteMessage('送信に失敗しました')
+    } finally {
+      setInviteSending(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#FFFBFC] pb-24">
       <header className="bg-[#FFB7C5] text-white flex items-center px-4 py-4 gap-3">
@@ -82,6 +122,35 @@ export default function ContactsPage() {
       <p className="text-center text-xs text-gray-400 mt-4 mb-5 px-6">
         万が一の際、あなたのペットを託せる方の連絡先を入力してください。
       </p>
+
+      {/* 招待バナー */}
+      {showInvite && (
+        <div className="mx-5 mb-4 bg-pink-50 border border-pink-200 rounded-2xl p-4">
+          <p className="text-sm font-bold text-gray-700 mb-1">アプリの紹介を送りますか？</p>
+          <p className="text-xs text-gray-500 leading-relaxed mb-3">
+            相手もアプリをインストールすると、メールとアプリ両方で通知されるので見逃しにくくなります！
+          </p>
+          {inviteMessage ? (
+            <p className="text-xs text-center text-green-500 font-bold">{inviteMessage}</p>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={handleSendInvite}
+                disabled={inviteSending}
+                className="flex-1 bg-[#FFB7C5] text-white text-sm font-bold py-2 rounded-xl disabled:opacity-50"
+              >
+                {inviteSending ? '送信中...' : '招待メールを送る'}
+              </button>
+              <button
+                onClick={() => setShowInvite(false)}
+                className="flex-1 bg-white border border-gray-200 text-gray-400 text-sm py-2 rounded-xl"
+              >
+                あとで
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 登録済み連絡先リスト */}
       {contacts.length > 0 && (
