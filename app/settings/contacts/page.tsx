@@ -11,19 +11,35 @@ export default function ContactsPage() {
   const router = useRouter()
   const [contacts, setContacts] = useState<EmergencyContact[]>([])
   const [loading, setLoading] = useState(true)
+  const [displayId, setDisplayId] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('emergency_contacts')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('priority')
-      .then(({ data }) => {
-        setContacts(data ?? [])
-        setLoading(false)
-      })
+    Promise.all([
+      supabase
+        .from('emergency_contacts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('priority'),
+      supabase
+        .from('moshimo_info')
+        .select('display_id')
+        .eq('user_id', user.id)
+        .single()
+    ]).then(([contactsRes, infoRes]) => {
+      setContacts(contactsRes.data ?? [])
+      setDisplayId(infoRes.data?.display_id ?? null)
+      setLoading(false)
+    })
   }, [user])
+
+  const handleCopy = () => {
+    if (!displayId) return
+    navigator.clipboard.writeText(displayId)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
     <div className="min-h-screen bg-[#FFFBFC] pb-24">
@@ -35,6 +51,38 @@ export default function ContactsPage() {
         </button>
         <span className="text-lg font-bold">緊急連絡先</span>
       </header>
+
+      {/* あなたのID */}
+      {displayId && (
+        <div className="mx-5 mt-5 bg-white rounded-2xl border border-gray-100 p-4">
+          <p className="text-xs text-gray-400 mb-2">あなたのID</p>
+          <div className="flex items-center justify-between">
+            <span className="text-2xl font-bold text-gray-700 tracking-widest">{displayId}</span>
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 text-xs text-[#FFB7C5] border border-pink-200 px-3 py-1.5 rounded-lg"
+            >
+              {copied ? (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-3.5 h-3.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  コピーしました
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  コピー
+                </>
+              )}
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">代理人に伝えて連絡先登録時に入力してもらいましょう</p>
+        </div>
+      )}
 
       <p className="text-center text-xs text-gray-400 mt-4 mb-5 px-6">
         万が一の際、あなたのペットを託せる方を最大3人まで登録できます。
