@@ -52,34 +52,34 @@ function OnboardingInner() {
   const [step, setStep] = useState<Step>(isTutorialMode ? 'tutorial1' : 'welcome')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-
   const [petName, setPetName] = useState('')
   const [petSpecies, setPetSpecies] = useState('')
   const [petFile, setPetFile] = useState<File | null>(null)
   const [petPreview, setPetPreview] = useState<string | null>(null)
-
   const [fullName, setFullName] = useState('')
   const [address, setAddress] = useState('')
-
   const [alertEnabled, setAlertEnabled] = useState(false)
   const [alertHours, setAlertHours] = useState<24 | 48>(24)
   const [proxyEmail, setProxyEmail] = useState('')
 
   const completeOnboarding = async () => {
     if (!user) return
+    const generateId = () => String(Math.floor(1000 + Math.random() * 9000))
     const { data: existing } = await supabase
       .from('moshimo_info')
-      .select('id')
+      .select('id, display_id')
       .eq('user_id', user.id)
       .single()
-
     if (existing) {
-      await supabase.from('moshimo_info')
-        .update({ onboarding_completed: true })
-        .eq('user_id', user.id)
+      const updates: any = { onboarding_completed: true }
+      if (!existing.display_id) updates.display_id = generateId()
+      await supabase.from('moshimo_info').update(updates).eq('user_id', user.id)
     } else {
-      await supabase.from('moshimo_info')
-        .insert({ user_id: user.id, onboarding_completed: true })
+      await supabase.from('moshimo_info').insert({
+        user_id: user.id,
+        onboarding_completed: true,
+        display_id: generateId()
+      })
     }
     router.push('/')
   }
@@ -125,9 +125,7 @@ function OnboardingInner() {
         .select('id')
         .eq('user_id', user.id)
         .single()
-
       const payload = { full_name: fullName, address: address, user_id: user.id }
-
       if (existing) {
         await supabase.from('moshimo_info').update(payload).eq('user_id', user.id)
       } else {
@@ -153,14 +151,12 @@ function OnboardingInner() {
         .select('id')
         .eq('user_id', user.id)
         .single()
-
       const payload = {
         alert_enabled: alertEnabled,
         alert_hours: alertHours,
         proxy_email: proxyEmail || null,
         user_id: user.id,
       }
-
       if (existing) {
         await supabase.from('moshimo_info').update(payload).eq('user_id', user.id)
       } else {
@@ -180,7 +176,6 @@ function OnboardingInner() {
 
   return (
     <div className="min-h-screen bg-[#FFFBFC] flex flex-col">
-
       {currentProgressIndex >= 0 && (
         <div className="flex gap-1.5 px-5 pt-5">
           {progressSteps.map((s, i) => (
@@ -315,7 +310,6 @@ function OnboardingInner() {
                 ))}
               </div>
             </div>
-
             <div className="bg-white rounded-2xl border border-gray-100 p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-bold text-gray-600">アラートを有効にする</span>
@@ -333,7 +327,6 @@ function OnboardingInner() {
                 </div>
               )}
             </div>
-
             <p className="text-xs text-gray-400 text-center px-4">
               ※後から設定を変更することが可能です
             </p>
@@ -376,7 +369,7 @@ function OnboardingInner() {
               <p className="text-sm text-gray-500 leading-relaxed mb-8">{slide.desc}</p>
               <button onClick={() => setStep(nextStep)}
                 className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2">
-                {isLast ? 'さっそく始める 🐾' : '次へ'}
+                {isLast ? 'さっそく始める' : '次へ'}
                 {!isLast && (
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
                     <polyline points="9 18 15 12 9 6"/>
@@ -390,14 +383,18 @@ function OnboardingInner() {
 
       {step === 'done' && (
         <div className="flex flex-col items-center justify-center flex-1 px-8 text-center">
-          <div className="text-7xl mb-6">🐾</div>
+          <div className="w-20 h-20 rounded-full bg-pink-50 flex items-center justify-center mb-6">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-10 h-10">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
           <h2 className="text-xl font-bold text-gray-700 mb-4">準備完了！</h2>
           <p className="text-sm text-gray-500 leading-relaxed mb-10">
             毎日の記録が大切なペットを守ります。<br/>さっそく今日の記録をつけてみましょう！
           </p>
           <button onClick={completeOnboarding}
             className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base">
-            はじめる 🐾
+            はじめる
           </button>
         </div>
       )}
