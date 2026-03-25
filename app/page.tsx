@@ -186,14 +186,16 @@ export default function HomePage() {
             height={400}
             className="w-full object-cover"
           />
-          {/* 丸ボタン（中央に配置） */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-            <div className="w-16 h-16 rounded-full bg-[#FFB7C5] flex items-center justify-center shadow-md">
-              <svg viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth={1.5} className="w-7 h-7">
+          {/* 下部グラデーション＋テキスト */}
+          <div className="absolute bottom-0 left-0 right-0 h-18 flex flex-col items-center justify-end pb-3 gap-0.5"
+            style={{ background: 'linear-gradient(to top, rgba(255,183,197,0.95) 0%, rgba(255,183,197,0) 100%)' }}>
+            <div className="flex items-center gap-1.5">
+              <svg viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth={1.5} className="w-4 h-4">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
               </svg>
+              <span className="text-sm font-bold text-white drop-shadow">今日も元気！</span>
             </div>
-            <span className="text-xs font-medium text-white drop-shadow">今日も元気！</span>
+            <span className="text-white/80 text-xs">タップして今日の元気を記録</span>
           </div>
         </button>
       </div>
