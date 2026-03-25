@@ -42,6 +42,12 @@ const toLocalDateString = () => {
   return `${y}-${m}-${d}`
 }
 
+const PetPlaceholderIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-6 h-6">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+  </svg>
+)
+
 export default function RecordPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#FFFBFC]" />}>
@@ -67,9 +73,15 @@ function RecordPageInner() {
 
   useEffect(() => {
     if (!user) return
-    supabase.from('my_pets').select('*').order('created_at').then(({ data }) => {
-      setPets(data ?? [])
-      if (data && data.length > 0) setSelectedPet(data[0])
+    const petId = searchParams.get('petId')
+    supabase.from('my_pets').select('*').eq('user_id', user.id).order('created_at').then(({ data }) => {
+      const list = data ?? []
+      setPets(list)
+      if (list.length > 0) {
+        // petIdが指定されていればその子を初期選択、なければ先頭
+        const target = petId ? list.find(p => p.id === petId) ?? list[0] : list[0]
+        setSelectedPet(target)
+      }
     })
   }, [user])
 
@@ -164,7 +176,9 @@ function RecordPageInner() {
                 {pet.image_url ? (
                   <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-pink-50 flex items-center justify-center text-xl">🐱</div>
+                  <div className="w-full h-full bg-pink-50 flex items-center justify-center">
+                    <PetPlaceholderIcon />
+                  </div>
                 )}
               </div>
               <span className={`text-xs font-medium ${selectedPet?.id === pet.id ? 'text-[#FFB7C5]' : 'text-gray-400'}`}>
@@ -248,7 +262,7 @@ function RecordPageInner() {
 
           {otherPets.length > 0 && (
             <div className="mt-3 pt-3 border-t border-gray-100">
-              <p className="text-xs text-gray-400 mb-2">📷 写真に他の子も写ってますか？</p>
+              <p className="text-xs text-gray-400 mb-2">写真に他の子も写っていますか？</p>
               <div className="flex gap-2 flex-wrap">
                 {otherPets.map(pet => (
                   <button
@@ -262,7 +276,13 @@ function RecordPageInner() {
                   >
                     {pet.image_url ? (
                       <img src={pet.image_url} alt={pet.name} className="w-5 h-5 rounded-full object-cover" />
-                    ) : '🐱'}
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-pink-50 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-3 h-3">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                      </div>
+                    )}
                     {pet.name}
                   </button>
                 ))}
