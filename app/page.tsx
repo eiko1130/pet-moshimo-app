@@ -38,7 +38,6 @@ export default function HomePage() {
     const today = toLocalDateString()
 
     const fetchData = async () => {
-      // ペット一覧取得
       const { data: petsData } = await supabase
         .from('my_pets')
         .select('id, name, image_url')
@@ -48,7 +47,6 @@ export default function HomePage() {
       const petList = petsData ?? []
       setPets(petList)
 
-      // 今日の記録取得
       const { data: recordsData } = await supabase
         .from('pet_records')
         .select('pet_id, image_url')
@@ -59,12 +57,10 @@ export default function HomePage() {
       const recorded = records.map(r => r.pet_id)
       setRecordedPetIds(recorded)
 
-      // ランダム画像取得（image_urlがあるレコードから）
       const images = records.map(r => r.image_url).filter(Boolean) as string[]
       if (images.length > 0) {
         setRandomImage(images[Math.floor(Math.random() * images.length)])
       } else {
-        // 今日の記録に画像がなければ過去の記録から取得
         const { data: pastRecords } = await supabase
           .from('pet_records')
           .select('image_url')
@@ -172,55 +168,68 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ロゴ・メインビジュアル */}
-      <div className="flex flex-col items-center py-4">
-        <Image src="/logo.png" alt="もしも手帳" width={240} height={48} priority className="mb-4" />
-        <Image src="/main.png" alt="猫" width={220} height={220} className="object-contain" />
+      {/* ロゴ */}
+      <div className="flex justify-center pt-4 pb-2">
+        <Image src="/logo.png" alt="もしも手帳" width={240} height={48} priority />
       </div>
 
-      {/* メインボタン */}
-      <div className="px-10 space-y-3">
+      {/* メイン画像ボタン */}
+      <div className="px-10">
         <button
           onClick={handleCheckIn}
-          className="flex items-center justify-center gap-2 w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base shadow-sm"
+          className="relative w-full rounded-3xl overflow-hidden"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-5 h-5">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-          </svg>
-          今日も元気！
-        </button>
-
-        <div className="flex justify-around pt-2">
-          <Link href="/pets" className="flex flex-col items-center gap-2">
-            <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
+          <Image
+            src="/main.png"
+            alt="今日も元気！"
+            width={400}
+            height={400}
+            className="w-full object-cover"
+          />
+          {/* オーバーレイ */}
+          <div className="absolute inset-0 bg-[#FFB7C5]/40 flex flex-col items-center justify-center gap-2">
+            <div className="bg-white/90 rounded-full px-6 py-2.5 flex items-center gap-2 shadow-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2.5} className="w-5 h-5">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
               </svg>
+              <span className="text-[#FFB7C5] font-bold text-base">今日も元気！</span>
             </div>
-            <span className="text-xs text-gray-500 font-medium">ペット情報</span>
-          </Link>
+            <span className="text-white text-xs font-medium drop-shadow">タップして今日の元気を記録</span>
+          </div>
+        </button>
+      </div>
 
-          <Link href="/settings/owner" className="flex flex-col items-center gap-2">
-            <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <span className="text-xs text-gray-500 font-medium">飼い主情報</span>
-          </Link>
+      {/* ショートカット */}
+      <div className="flex justify-around px-10 pt-5">
+        <Link href="/pets" className="flex flex-col items-center gap-2">
+          <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </div>
+          <span className="text-xs text-gray-500 font-medium">ペット情報</span>
+        </Link>
 
-          <Link href="/settings/contacts" className="flex flex-col items-center gap-2">
-            <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
-            </div>
-            <span className="text-xs text-gray-500 font-medium">緊急連絡先</span>
-          </Link>
-        </div>
+        <Link href="/settings/owner" className="flex flex-col items-center gap-2">
+          <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <span className="text-xs text-gray-500 font-medium">飼い主情報</span>
+        </Link>
+
+        <Link href="/settings/contacts" className="flex flex-col items-center gap-2">
+          <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </div>
+          <span className="text-xs text-gray-500 font-medium">緊急連絡先</span>
+        </Link>
       </div>
 
       {/* このアプリについて */}
@@ -241,10 +250,8 @@ export default function HomePage() {
       {/* ポップアップ */}
       {popupOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setPopupOpen(false)}>
-          <div
-            className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-10"
-            onClick={e => e.stopPropagation()}
-          >
+          <div className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-10" onClick={e => e.stopPropagation()}>
+
             {popupState === 'unchecked' && (
               <>
                 {randomImage && (
@@ -257,11 +264,7 @@ export default function HomePage() {
                 {unrecordedPets.length > 0 && (
                   <div className="flex gap-3 justify-center flex-wrap mb-5">
                     {unrecordedPets.map(pet => (
-                      <button
-                        key={pet.id}
-                        onClick={() => { setPopupOpen(false); router.push(`/record?petId=${pet.id}`) }}
-                        className="flex flex-col items-center gap-1"
-                      >
+                      <button key={pet.id} onClick={() => { setPopupOpen(false); router.push(`/record?petId=${pet.id}`) }} className="flex flex-col items-center gap-1">
                         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-pink-200">
                           {pet.image_url ? (
                             <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover" />
@@ -278,10 +281,7 @@ export default function HomePage() {
                     ))}
                   </div>
                 )}
-                <button
-                  onClick={() => setPopupOpen(false)}
-                  className="w-full py-3 rounded-2xl border border-gray-200 text-sm text-gray-400"
-                >
+                <button onClick={() => setPopupOpen(false)} className="w-full py-3 rounded-2xl border border-gray-200 text-sm text-gray-400">
                   あとで
                 </button>
               </>
@@ -293,11 +293,7 @@ export default function HomePage() {
                 <p className="text-center text-sm text-gray-400 mb-5">まだ記録していない子がいます</p>
                 <div className="flex gap-3 justify-center flex-wrap mb-5">
                   {unrecordedPets.map(pet => (
-                    <button
-                      key={pet.id}
-                      onClick={() => { setPopupOpen(false); router.push(`/record?petId=${pet.id}`) }}
-                      className="flex flex-col items-center gap-1"
-                    >
+                    <button key={pet.id} onClick={() => { setPopupOpen(false); router.push(`/record?petId=${pet.id}`) }} className="flex flex-col items-center gap-1">
                       <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-pink-200">
                         {pet.image_url ? (
                           <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover" />
@@ -313,10 +309,7 @@ export default function HomePage() {
                     </button>
                   ))}
                 </div>
-                <button
-                  onClick={() => setPopupOpen(false)}
-                  className="w-full py-3 rounded-2xl border border-gray-200 text-sm text-gray-400"
-                >
+                <button onClick={() => setPopupOpen(false)} className="w-full py-3 rounded-2xl border border-gray-200 text-sm text-gray-400">
                   閉じる
                 </button>
               </>
@@ -333,20 +326,15 @@ export default function HomePage() {
                 </div>
                 <p className="text-center text-lg font-bold text-gray-700 mb-1">全ての記録が完了しています！</p>
                 <p className="text-center text-sm text-gray-400 mb-5">今日の記録を見てみましょう</p>
-                <button
-                  onClick={() => { setPopupOpen(false); router.push(`/calendar/${today}`) }}
-                  className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base mb-3"
-                >
+                <button onClick={() => { setPopupOpen(false); router.push(`/calendar/${today}`) }} className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base mb-3">
                   今日の記録を見る
                 </button>
-                <button
-                  onClick={() => setPopupOpen(false)}
-                  className="w-full py-3 rounded-2xl border border-gray-200 text-sm text-gray-400"
-                >
+                <button onClick={() => setPopupOpen(false)} className="w-full py-3 rounded-2xl border border-gray-200 text-sm text-gray-400">
                   閉じる
                 </button>
               </>
             )}
+
           </div>
         </div>
       )}
