@@ -254,10 +254,80 @@ export default function HomePage() {
             {popupState === 'unchecked' && (
               <>
                 {randomImage && (
-                  <div className="w-full h-48 rounded-2xl overflow-hidden mb-4">
-                    <img src={randomImage} alt="うちの子" className="w-full h-full object-cover" />
-                  </div>
-                )}
+  <div className="flex justify-center mb-4">
+    <div className="relative w-40 h-40">
+      {/* 花・左上 */}
+      <svg viewBox="0 0 24 24" className="absolute -top-3 -left-1 w-8 h-8" fill="#FFB7C5">
+        <circle cx="12" cy="12" r="6"/>
+        <circle cx="12" cy="3" r="2.5"/>
+        <circle cx="12" cy="21" r="2.5"/>
+        <circle cx="3" cy="12" r="2.5"/>
+        <circle cx="21" cy="12" r="2.5"/>
+        <circle cx="5.5" cy="5.5" r="2"/>
+        <circle cx="18.5" cy="5.5" r="2"/>
+        <circle cx="5.5" cy="18.5" r="2"/>
+        <circle cx="18.5" cy="18.5" r="2"/>
+      </svg>
+      {/* 花・右上 */}
+      <svg viewBox="0 0 24 24" className="absolute -top-2 -right-2 w-7 h-7" fill="#FBBF24">
+        <circle cx="12" cy="12" r="6"/>
+        <circle cx="12" cy="3" r="2.5"/>
+        <circle cx="12" cy="21" r="2.5"/>
+        <circle cx="3" cy="12" r="2.5"/>
+        <circle cx="21" cy="12" r="2.5"/>
+        <circle cx="5.5" cy="5.5" r="2"/>
+        <circle cx="18.5" cy="5.5" r="2"/>
+        <circle cx="5.5" cy="18.5" r="2"/>
+        <circle cx="18.5" cy="18.5" r="2"/>
+      </svg>
+      {/* 花・左下 */}
+      <svg viewBox="0 0 24 24" className="absolute -bottom-2 -left-2 w-7 h-7" fill="#86EFAC">
+        <circle cx="12" cy="12" r="6"/>
+        <circle cx="12" cy="3" r="2.5"/>
+        <circle cx="12" cy="21" r="2.5"/>
+        <circle cx="3" cy="12" r="2.5"/>
+        <circle cx="21" cy="12" r="2.5"/>
+        <circle cx="5.5" cy="5.5" r="2"/>
+        <circle cx="18.5" cy="5.5" r="2"/>
+        <circle cx="5.5" cy="18.5" r="2"/>
+        <circle cx="18.5" cy="18.5" r="2"/>
+      </svg>
+      {/* 花・右下 */}
+      <svg viewBox="0 0 24 24" className="absolute -bottom-3 -right-1 w-8 h-8" fill="#FFB7C5">
+        <circle cx="12" cy="12" r="6"/>
+        <circle cx="12" cy="3" r="2.5"/>
+        <circle cx="12" cy="21" r="2.5"/>
+        <circle cx="3" cy="12" r="2.5"/>
+        <circle cx="21" cy="12" r="2.5"/>
+        <circle cx="5.5" cy="5.5" r="2"/>
+        <circle cx="18.5" cy="5.5" r="2"/>
+        <circle cx="5.5" cy="18.5" r="2"/>
+        <circle cx="18.5" cy="18.5" r="2"/>
+      </svg>
+      {/* キラキラ */}
+      <svg viewBox="0 0 10 10" className="absolute top-0 right-4 w-4 h-4" fill="none" stroke="#FFB7C5" strokeWidth={1.5}>
+        <line x1="5" y1="0" x2="5" y2="10"/>
+        <line x1="0" y1="5" x2="10" y2="5"/>
+        <line x1="1" y1="1" x2="9" y2="9"/>
+        <line x1="9" y1="1" x2="1" y2="9"/>
+      </svg>
+      <svg viewBox="0 0 10 10" className="absolute bottom-2 left-4 w-3 h-3" fill="none" stroke="#FBBF24" strokeWidth={1.5}>
+        <line x1="5" y1="0" x2="5" y2="10"/>
+        <line x1="0" y1="5" x2="10" y2="5"/>
+        <line x1="1" y1="1" x2="9" y2="9"/>
+        <line x1="9" y1="1" x2="1" y2="9"/>
+      </svg>
+      {/* ドット */}
+      <div className="absolute top-2 left-0 w-2 h-2 rounded-full bg-[#86EFAC]"/>
+      <div className="absolute top-1 right-6 w-1.5 h-1.5 rounded-full bg-pink-300"/>
+      <div className="absolute bottom-1 right-3 w-2 h-2 rounded-full bg-yellow-300"/>
+      {/* 丸い写真 */}
+      <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-md">
+        <img src={randomImage} alt="うちの子" className="w-full h-full object-cover" />
+      </div>
+    </div>
+  </div>
+)}
                 <p className="text-center text-lg font-bold text-gray-700 mb-1">今日も元気を確認しました！</p>
                 <p className="text-center text-sm text-gray-400 mb-5">ペットの記録もつけてみませんか？</p>
                 {unrecordedPets.length > 0 && (
