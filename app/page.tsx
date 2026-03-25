@@ -170,7 +170,7 @@ export default function HomePage() {
 
       {/* ロゴ */}
       <div className="flex justify-center pt-4 pb-2">
-        <Image src="/logo.png" alt="もしも手帳" width={240} height={48} priority />
+        <Image src="/logo.webp" alt="もしも手帳" width={240} height={48} priority />
       </div>
 
       {/* メイン画像ボタン */}
@@ -180,21 +180,20 @@ export default function HomePage() {
           className="relative w-full rounded-3xl overflow-hidden"
         >
           <Image
-            src="/main.png"
+            src="/main.webp"
             alt="今日も元気！"
             width={400}
             height={400}
             className="w-full object-cover"
           />
-          {/* オーバーレイ */}
-          <div className="absolute inset-0 bg-[#FFB7C5]/40 flex flex-col items-center justify-center gap-2">
-            <div className="bg-white/90 rounded-full px-6 py-2.5 flex items-center gap-2 shadow-sm">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2.5} className="w-5 h-5">
+          {/* 丸ボタン（中央下に配置） */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
+            <div className="w-16 h-16 rounded-full bg-[#FFB7C5] flex items-center justify-center shadow-md">
+              <svg viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth={1.5} className="w-7 h-7">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-              <span className="text-[#FFB7C5] font-bold text-base">今日も元気！</span>
+            </svg>
             </div>
-            <span className="text-white text-xs font-medium drop-shadow">タップして今日の元気を記録</span>
+            <span className="text-xs font-medium text-white drop-shadow">今日も元気！</span>
           </div>
         </button>
       </div>
