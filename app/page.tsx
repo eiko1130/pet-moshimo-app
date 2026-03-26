@@ -13,8 +13,6 @@ type Pet = {
   image_url: string | null
 }
 
-type PopupState = 'unchecked' | 'partial' | 'complete'
-
 const toLocalDateString = () => {
   const now = new Date()
   const y = now.getFullYear()
@@ -28,14 +26,11 @@ export default function HomePage() {
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const [pets, setPets] = useState<Pet[]>([])
-  const [recordedPetIds, setRecordedPetIds] = useState<string[]>([])
   const [randomImage, setRandomImage] = useState<string | null>(null)
   const [popupOpen, setPopupOpen] = useState(false)
-  const [popupState, setPopupState] = useState<PopupState>('unchecked')
 
   useEffect(() => {
     if (!user) return
-    const today = toLocalDateString()
 
     const fetchData = async () => {
       const { data: petsData } = await supabase
@@ -44,18 +39,19 @@ export default function HomePage() {
         .eq('user_id', user.id)
         .order('created_at')
 
-        const petList = petsData ?? []
-        setPets(petList)
-        petList.forEach(pet => {
-          if (pet.image_url) {
-            const link = document.createElement('link')
-            link.rel = 'preload'
-            link.as = 'image'
-            link.href = pet.image_url
-            document.head.appendChild(link)
-          }
-        })
+      const petList = petsData ?? []
+      setPets(petList)
+      petList.forEach(pet => {
+        if (pet.image_url) {
+          const link = document.createElement('link')
+          link.rel = 'preload'
+          link.as = 'image'
+          link.href = pet.image_url
+          document.head.appendChild(link)
+        }
+      })
 
+      const today = toLocalDateString()
       const { data: recordsData } = await supabase
         .from('pet_records')
         .select('pet_id, image_url')
@@ -63,11 +59,7 @@ export default function HomePage() {
         .eq('date', today)
 
       const records = recordsData ?? []
-      const recorded = records.map(r => r.pet_id)
-      setRecordedPetIds(recorded)
-
       const images = records.map(r => r.image_url).filter(Boolean) as string[]
-      
       if (images.length > 0) {
         const chosen = images[Math.floor(Math.random() * images.length)]
         setRandomImage(chosen)
@@ -100,25 +92,15 @@ export default function HomePage() {
     fetchData()
   }, [user])
 
-  const handleCheckIn = () => {
-    if (pets.length === 0) {
-      setPopupState('unchecked')
-      setPopupOpen(true)
-      return
-    }
-    const unrecorded = pets.filter(p => !recordedPetIds.includes(p.id))
-    if (recordedPetIds.length === 0) {
-      setPopupState('unchecked')
-    } else if (unrecorded.length > 0) {
-      setPopupState('partial')
-    } else {
-      setPopupState('complete')
+  const handleCheckIn = async () => {
+    if (user) {
+      await supabase
+        .from('moshimo_info')
+        .update({ last_checked_at: new Date().toISOString() })
+        .eq('user_id', user.id)
     }
     setPopupOpen(true)
   }
-
-  const unrecordedPets = pets.filter(p => !recordedPetIds.includes(p.id))
-  const today = toLocalDateString()
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -192,11 +174,11 @@ export default function HomePage() {
 
       {/* ロゴ */}
       <div className="flex justify-center pt-4 pb-2">
-      <Image src="/logo.webp" alt="もしも手帳" width={240} height={80} className="object-contain" priority />
+        <Image src="/logo.webp" alt="もしも手帳" width={240} height={80} className="object-contain" priority />
       </div>
 
-    {/* メイン画像ボタン */}
-    <div className="px-10">
+      {/* メイン画像ボタン */}
+      <div className="px-10">
         <button
           onClick={handleCheckIn}
           className="relative w-full rounded-3xl overflow-hidden"
@@ -210,7 +192,6 @@ export default function HomePage() {
               priority
             />
           </div>
-          {/* 下部グラデーション＋テキスト */}
           <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-end pb-4 gap-0.5"
             style={{ height: '80px', background: 'linear-gradient(to top, rgba(255,183,197,1) 0%, rgba(255,183,197,0.8) 50%, rgba(255,183,197,0) 100%)' }}>
             <div className="flex items-center gap-1.5">
@@ -272,164 +253,40 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* ポップアップ */}
+      {/* ポップアップ（中央モーダル） */}
       {popupOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setPopupOpen(false)}>
-          <div className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-10" onClick={e => e.stopPropagation()}>
-
-            {popupState === 'unchecked' && (
-              <>
-                {randomImage && (
-  <div className="flex justify-center mb-4">
-    <div className="relative w-40 h-40">
-      {/* 花・左上 */}
-      <svg viewBox="0 0 24 24" className="absolute -top-3 -left-1 w-8 h-8" fill="#FFB7C5">
-        <circle cx="12" cy="12" r="6"/>
-        <circle cx="12" cy="3" r="2.5"/>
-        <circle cx="12" cy="21" r="2.5"/>
-        <circle cx="3" cy="12" r="2.5"/>
-        <circle cx="21" cy="12" r="2.5"/>
-        <circle cx="5.5" cy="5.5" r="2"/>
-        <circle cx="18.5" cy="5.5" r="2"/>
-        <circle cx="5.5" cy="18.5" r="2"/>
-        <circle cx="18.5" cy="18.5" r="2"/>
-      </svg>
-      {/* 花・右上 */}
-      <svg viewBox="0 0 24 24" className="absolute -top-2 -right-2 w-7 h-7" fill="#FBBF24">
-        <circle cx="12" cy="12" r="6"/>
-        <circle cx="12" cy="3" r="2.5"/>
-        <circle cx="12" cy="21" r="2.5"/>
-        <circle cx="3" cy="12" r="2.5"/>
-        <circle cx="21" cy="12" r="2.5"/>
-        <circle cx="5.5" cy="5.5" r="2"/>
-        <circle cx="18.5" cy="5.5" r="2"/>
-        <circle cx="5.5" cy="18.5" r="2"/>
-        <circle cx="18.5" cy="18.5" r="2"/>
-      </svg>
-      {/* 花・左下 */}
-      <svg viewBox="0 0 24 24" className="absolute -bottom-2 -left-2 w-7 h-7" fill="#86EFAC">
-        <circle cx="12" cy="12" r="6"/>
-        <circle cx="12" cy="3" r="2.5"/>
-        <circle cx="12" cy="21" r="2.5"/>
-        <circle cx="3" cy="12" r="2.5"/>
-        <circle cx="21" cy="12" r="2.5"/>
-        <circle cx="5.5" cy="5.5" r="2"/>
-        <circle cx="18.5" cy="5.5" r="2"/>
-        <circle cx="5.5" cy="18.5" r="2"/>
-        <circle cx="18.5" cy="18.5" r="2"/>
-      </svg>
-      {/* 花・右下 */}
-      <svg viewBox="0 0 24 24" className="absolute -bottom-3 -right-1 w-8 h-8" fill="#FFB7C5">
-        <circle cx="12" cy="12" r="6"/>
-        <circle cx="12" cy="3" r="2.5"/>
-        <circle cx="12" cy="21" r="2.5"/>
-        <circle cx="3" cy="12" r="2.5"/>
-        <circle cx="21" cy="12" r="2.5"/>
-        <circle cx="5.5" cy="5.5" r="2"/>
-        <circle cx="18.5" cy="5.5" r="2"/>
-        <circle cx="5.5" cy="18.5" r="2"/>
-        <circle cx="18.5" cy="18.5" r="2"/>
-      </svg>
-      {/* キラキラ */}
-      <svg viewBox="0 0 10 10" className="absolute top-0 right-4 w-4 h-4" fill="none" stroke="#FFB7C5" strokeWidth={1.5}>
-        <line x1="5" y1="0" x2="5" y2="10"/>
-        <line x1="0" y1="5" x2="10" y2="5"/>
-        <line x1="1" y1="1" x2="9" y2="9"/>
-        <line x1="9" y1="1" x2="1" y2="9"/>
-      </svg>
-      <svg viewBox="0 0 10 10" className="absolute bottom-2 left-4 w-3 h-3" fill="none" stroke="#FBBF24" strokeWidth={1.5}>
-        <line x1="5" y1="0" x2="5" y2="10"/>
-        <line x1="0" y1="5" x2="10" y2="5"/>
-        <line x1="1" y1="1" x2="9" y2="9"/>
-        <line x1="9" y1="1" x2="1" y2="9"/>
-      </svg>
-      {/* ドット */}
-      <div className="absolute top-2 left-0 w-2 h-2 rounded-full bg-[#86EFAC]"/>
-      <div className="absolute top-1 right-6 w-1.5 h-1.5 rounded-full bg-pink-300"/>
-      <div className="absolute bottom-1 right-3 w-2 h-2 rounded-full bg-yellow-300"/>
-      {/* 丸い写真 */}
-      <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-md">
-        <img src={randomImage} alt="うちの子" className="w-full h-full object-cover" />
-      </div>
-    </div>
-  </div>
-)}
-                <p className="text-center text-lg font-bold text-gray-700 mb-1">今日も元気を確認しました！</p>
-                <p className="text-center text-sm text-gray-400 mb-5">ペットの記録もつけてみませんか？</p>
-                {unrecordedPets.length > 0 && (
-                  <div className="flex gap-3 justify-center flex-wrap mb-5">
-                    {unrecordedPets.map(pet => (
-                      <button key={pet.id} onClick={() => { setPopupOpen(false); router.push(`/record?petId=${pet.id}`) }} className="flex flex-col items-center gap-1">
-                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-pink-200">
-                          {pet.image_url ? (
-                            <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-pink-50 flex items-center justify-center">
-                              <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-xs text-gray-500 font-medium">{pet.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <button onClick={() => setPopupOpen(false)} className="w-full py-3 rounded-2xl border border-gray-200 text-sm text-gray-400">
-                  あとで
-                </button>
-              </>
-            )}
-
-            {popupState === 'partial' && (
-              <>
-                <p className="text-center text-lg font-bold text-gray-700 mb-1">今日は確認済みです</p>
-                <p className="text-center text-sm text-gray-400 mb-5">まだ記録していない子がいます</p>
-                <div className="flex gap-3 justify-center flex-wrap mb-5">
-                  {unrecordedPets.map(pet => (
-                    <button key={pet.id} onClick={() => { setPopupOpen(false); router.push(`/record?petId=${pet.id}`) }} className="flex flex-col items-center gap-1">
-                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-pink-200">
-                        {pet.image_url ? (
-                          <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full bg-pink-50 flex items-center justify-center">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
-                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-xs text-gray-500 font-medium">{pet.name}</span>
-                    </button>
-                  ))}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-8">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden">
+            {/* 写真エリア */}
+            <div className="relative">
+              {randomImage ? (
+                <div className="relative w-full aspect-square">
+                  <img src={randomImage} alt="今日のうちの子" className="w-full h-full object-cover" />
                 </div>
-                <button onClick={() => setPopupOpen(false)} className="w-full py-3 rounded-2xl border border-gray-200 text-sm text-gray-400">
-                  閉じる
-                </button>
-              </>
-            )}
-
-            {popupState === 'complete' && (
-              <>
-                <div className="flex justify-center mb-4">
-                  <div className="w-16 h-16 rounded-full bg-pink-50 flex items-center justify-center">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-8 h-8">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </div>
+              ) : (
+                <div className="w-full aspect-square bg-pink-50 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-16 h-16">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
                 </div>
-                <p className="text-center text-lg font-bold text-gray-700 mb-1">全ての記録が完了しています！</p>
-                <p className="text-center text-sm text-gray-400 mb-5">今日の記録を見てみましょう</p>
-                <button onClick={() => { setPopupOpen(false); router.push(`/calendar/${today}`) }} className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base mb-3">
-                  今日の記録を見る
-                </button>
-                <button onClick={() => setPopupOpen(false)} className="w-full py-3 rounded-2xl border border-gray-200 text-sm text-gray-400">
-                  閉じる
-                </button>
-              </>
-            )}
+              )}
+              {/* ×ボタン */}
+              <button
+                onClick={() => { setPopupOpen(false); router.push('/record') }}
+                className="absolute top-3 right-3 bg-black/40 rounded-full p-1.5"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2.5} className="w-4 h-4">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
 
+            {/* テキストエリア */}
+            <div className="px-5 py-4">
+              <p className="text-center text-base font-bold text-gray-700 mb-1">今日も元気を確認しました！</p>
+              <p className="text-center text-xs text-gray-400">今日のうちの子：オキ家のしらすちゃん</p>
+            </div>
           </div>
         </div>
       )}
