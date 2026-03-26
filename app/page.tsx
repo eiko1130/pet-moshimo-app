@@ -192,9 +192,7 @@ export default function HomePage() {
 
       {/* ロゴ */}
       <div className="flex justify-center pt-4 pb-2">
-      <div className="relative w-60 h-12">
-          <Image src="/logo.webp" alt="もしも手帳" fill className="object-contain" priority />
-        </div>
+      <Image src="/logo.webp" alt="もしも手帳" width={240} height={80} className="object-contain" priority />
       </div>
 
     {/* メイン画像ボタン */}
