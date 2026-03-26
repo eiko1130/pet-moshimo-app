@@ -256,11 +256,15 @@ export default function HomePage() {
       {/* ポップアップ（中央モーダル） */}
       {popupOpen && (
         <div
-        className="bg-white rounded-3xl w-full max-w-sm overflow-hidden"
-        onClick={() => { setPopupOpen(false); router.push('/record') }}
-      >
-           {/* 写真エリア */}
-           <div className="flex justify-center pt-6 pb-2">
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-8"
+          onClick={() => { setPopupOpen(false); router.push('/record') }}
+        >
+          <div
+            className="bg-white rounded-3xl w-full max-w-sm overflow-hidden"
+            onClick={() => { setPopupOpen(false); router.push('/record') }}
+          >
+            {/* 写真エリア */}
+            <div className="flex justify-center pt-6 pb-2">
               <div className="relative w-44 h-44">
                 {/* 花・左上 */}
                 <svg viewBox="0 0 24 24" className="absolute -top-3 -left-1 w-8 h-8" fill="#FFB7C5">
