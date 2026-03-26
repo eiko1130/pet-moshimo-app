@@ -329,7 +329,7 @@ export default function HomePage() {
                 {/* 左の三角 */}
                 <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderRight: '12px solid #FFB7C5' }} />
                 <div className="bg-[#FFB7C5] px-4 py-1">
-                  <span className="text-white text-xs font-medium">今日のうちの子：オキ家のしらすちゃん</span>
+                  <span className="text-white text-xs font-medium">今日のうちの子：オキ家のおこめちゃん</span>
                 </div>
                 {/* 右の三角 */}
                 <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderLeft: '12px solid #FFB7C5' }} />
