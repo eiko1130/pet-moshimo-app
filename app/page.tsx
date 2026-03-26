@@ -321,11 +321,19 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-
-            {/* テキストエリア */}
-            <div className="px-5 py-4">
-              <p className="text-center text-base font-bold text-gray-700 mb-1">今日も元気を確認しました！</p>
-              <p className="text-center text-xs text-gray-400">今日のうちの子：オキ家のしらすちゃん</p>
+{/* テキストエリア */}
+<div className="px-5 pt-2 pb-6 flex flex-col items-center gap-3">
+              <p className="text-center text-base font-bold text-gray-700">今日も元気を確認しました！</p>
+              {/* リボン風ラベル */}
+              <div className="relative flex items-center justify-center">
+                {/* 左の三角 */}
+                <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderRight: '12px solid #FFB7C5' }} />
+                <div className="bg-[#FFB7C5] px-4 py-1">
+                  <span className="text-white text-xs font-medium">今日のうちの子：オキ家のしらすちゃん</span>
+                </div>
+                {/* 右の三角 */}
+                <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderLeft: '12px solid #FFB7C5' }} />
+              </div>
             </div>
           </div>
         </div>
