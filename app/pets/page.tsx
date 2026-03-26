@@ -29,7 +29,7 @@ export default function PetsPage() {
         うちの子リスト
       </header>
 
-      <p className="text-center text-sm text-gray-400 mt-5 mb-6">記録をつけたいペットを選んでください</p>
+      <p className="text-center text-sm text-gray-400 mt-5 mb-6">ペット情報詳細や追加ができます</p>
 
       {loading ? (
         <div className="flex justify-center mt-10">
