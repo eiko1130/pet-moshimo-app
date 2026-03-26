@@ -192,7 +192,9 @@ export default function HomePage() {
 
       {/* ロゴ */}
       <div className="flex justify-center pt-4 pb-2">
-        <Image src="/logo.webp" alt="もしも手帳" width={240} height={48} priority />
+      <div className="relative w-60 h-12">
+          <Image src="/logo.webp" alt="もしも手帳" fill className="object-contain" priority />
+        </div>
       </div>
 
     {/* メイン画像ボタン */}
@@ -201,14 +203,15 @@ export default function HomePage() {
           onClick={handleCheckIn}
           className="relative w-full rounded-3xl overflow-hidden"
         >
-          <Image
-            src="/main.webp"
-            alt="今日も元気！"
-            width={400}
-            height={400}
-            className="w-full object-cover"
-            priority
-          />
+          <div className="relative w-full aspect-square">
+            <Image
+              src="/main.webp"
+              alt="今日も元気！"
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
           {/* 下部グラデーション＋テキスト */}
           <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-end pb-4 gap-0.5"
             style={{ height: '80px', background: 'linear-gradient(to top, rgba(255,183,197,1) 0%, rgba(255,183,197,0.8) 50%, rgba(255,183,197,0) 100%)' }}>
