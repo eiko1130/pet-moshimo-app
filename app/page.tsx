@@ -207,6 +207,7 @@ export default function HomePage() {
             width={400}
             height={400}
             className="w-full object-cover"
+            priority
           />
           {/* 下部グラデーション＋テキスト */}
           <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-end pb-4 gap-0.5"
