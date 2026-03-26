@@ -44,8 +44,17 @@ export default function HomePage() {
         .eq('user_id', user.id)
         .order('created_at')
 
-      const petList = petsData ?? []
-      setPets(petList)
+        const petList = petsData ?? []
+        setPets(petList)
+        petList.forEach(pet => {
+          if (pet.image_url) {
+            const link = document.createElement('link')
+            link.rel = 'preload'
+            link.as = 'image'
+            link.href = pet.image_url
+            document.head.appendChild(link)
+          }
+        })
 
       const { data: recordsData } = await supabase
         .from('pet_records')
@@ -58,8 +67,15 @@ export default function HomePage() {
       setRecordedPetIds(recorded)
 
       const images = records.map(r => r.image_url).filter(Boolean) as string[]
+      
       if (images.length > 0) {
-        setRandomImage(images[Math.floor(Math.random() * images.length)])
+        const chosen = images[Math.floor(Math.random() * images.length)]
+        setRandomImage(chosen)
+        const link = document.createElement('link')
+        link.rel = 'preload'
+        link.as = 'image'
+        link.href = chosen
+        document.head.appendChild(link)
       } else {
         const { data: pastRecords } = await supabase
           .from('pet_records')
@@ -70,7 +86,13 @@ export default function HomePage() {
           .limit(20)
         const pastImages = (pastRecords ?? []).map(r => r.image_url).filter(Boolean) as string[]
         if (pastImages.length > 0) {
-          setRandomImage(pastImages[Math.floor(Math.random() * pastImages.length)])
+          const chosen = pastImages[Math.floor(Math.random() * pastImages.length)]
+          setRandomImage(chosen)
+          const link = document.createElement('link')
+          link.rel = 'preload'
+          link.as = 'image'
+          link.href = chosen
+          document.head.appendChild(link)
         }
       }
     }
