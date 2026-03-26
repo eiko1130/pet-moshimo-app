@@ -255,31 +255,65 @@ export default function HomePage() {
 
       {/* ポップアップ（中央モーダル） */}
       {popupOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-8">
-          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden">
-            {/* 写真エリア */}
-            <div className="relative">
-              {randomImage ? (
-                <div className="relative w-full aspect-square">
-                  <img src={randomImage} alt="今日のうちの子" className="w-full h-full object-cover" />
-                </div>
-              ) : (
-                <div className="w-full aspect-square bg-pink-50 flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-16 h-16">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                  </svg>
-                </div>
-              )}
-              {/* ×ボタン */}
-              <button
-                onClick={() => { setPopupOpen(false); router.push('/record') }}
-                className="absolute top-3 right-3 bg-black/40 rounded-full p-1.5"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2.5} className="w-4 h-4">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-8" onClick={() => { setPopupOpen(false); router.push('/record') }}>
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+           {/* 写真エリア */}
+           <div className="flex justify-center pt-6 pb-2">
+              <div className="relative w-44 h-44">
+                {/* 花・左上 */}
+                <svg viewBox="0 0 24 24" className="absolute -top-3 -left-1 w-8 h-8" fill="#FFB7C5">
+                  <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
+                  <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
+                  <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
+                  <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
                 </svg>
-              </button>
+                {/* 花・右上 */}
+                <svg viewBox="0 0 24 24" className="absolute -top-2 -right-2 w-7 h-7" fill="#FBBF24">
+                  <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
+                  <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
+                  <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
+                  <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
+                </svg>
+                {/* 花・左下 */}
+                <svg viewBox="0 0 24 24" className="absolute -bottom-2 -left-2 w-7 h-7" fill="#86EFAC">
+                  <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
+                  <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
+                  <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
+                  <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
+                </svg>
+                {/* 花・右下 */}
+                <svg viewBox="0 0 24 24" className="absolute -bottom-3 -right-1 w-8 h-8" fill="#FFB7C5">
+                  <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
+                  <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
+                  <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
+                  <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
+                </svg>
+                {/* キラキラ */}
+                <svg viewBox="0 0 10 10" className="absolute top-0 right-4 w-4 h-4" fill="none" stroke="#FFB7C5" strokeWidth={1.5}>
+                  <line x1="5" y1="0" x2="5" y2="10"/><line x1="0" y1="5" x2="10" y2="5"/>
+                  <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
+                </svg>
+                <svg viewBox="0 0 10 10" className="absolute bottom-2 left-4 w-3 h-3" fill="none" stroke="#FBBF24" strokeWidth={1.5}>
+                  <line x1="5" y1="0" x2="5" y2="10"/><line x1="0" y1="5" x2="10" y2="5"/>
+                  <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
+                </svg>
+                {/* ドット */}
+                <div className="absolute top-2 left-0 w-2 h-2 rounded-full bg-[#86EFAC]"/>
+                <div className="absolute top-1 right-6 w-1.5 h-1.5 rounded-full bg-pink-300"/>
+                <div className="absolute bottom-1 right-3 w-2 h-2 rounded-full bg-yellow-300"/>
+                {/* 丸い写真 */}
+                <div className="w-44 h-44 rounded-full overflow-hidden border-4 border-white shadow-md">
+                  {randomImage ? (
+                    <img src={randomImage} alt="今日のうちの子" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-pink-50 flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-16 h-16">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* テキストエリア */}
