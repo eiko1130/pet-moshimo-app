@@ -49,8 +49,8 @@ export default function PetDetailPage() {
   const [message, setMessage] = useState('')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [farewellOpen, setFarewellOpen] = useState(false)
 
-  // トリミング関連
   const [cropSrc, setCropSrc] = useState<string | null>(null)
   const [crop, setCrop] = useState<Crop>()
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
@@ -141,8 +141,15 @@ export default function PetDetailPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm(`${form.name}を削除しますか？`)) return
+  const handleDeletePetOnly = async () => {
+    // my_petsのみ削除（pet_recordsは残す）
+    await supabase.from('my_pets').delete().eq('id', id)
+    router.push('/pets')
+  }
+
+  const handleDeleteAll = async () => {
+    // pet_recordsも含めて全削除
+    await supabase.from('pet_records').delete().eq('pet_id', id)
     await supabase.from('my_pets').delete().eq('id', id)
     router.push('/pets')
   }
@@ -180,17 +187,44 @@ export default function PetDetailPage() {
             />
           </ReactCrop>
           <div className="flex gap-3 mt-6 w-full max-w-xs">
-            <button
-              onClick={() => setCropSrc(null)}
-              className="flex-1 bg-white text-gray-600 font-bold py-3 rounded-2xl text-sm"
-            >
+            <button onClick={() => setCropSrc(null)}
+              className="flex-1 bg-white text-gray-600 font-bold py-3 rounded-2xl text-sm">
               キャンセル
             </button>
-            <button
-              onClick={handleCropDone}
-              className="flex-1 bg-[#FFB7C5] text-white font-bold py-3 rounded-2xl text-sm"
-            >
+            <button onClick={handleCropDone}
+              className="flex-1 bg-[#FFB7C5] text-white font-bold py-3 rounded-2xl text-sm">
               決定
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* さよならシート */}
+      {farewellOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={() => setFarewellOpen(false)}>
+          <div className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-10" onClick={e => e.stopPropagation()}>
+            <p className="text-center text-base font-bold text-gray-700 mb-1">{form.name}とさよならする</p>
+            <p className="text-center text-xs text-gray-400 mb-6">どちらにしますか？</p>
+
+            <button
+              onClick={handleDeletePetOnly}
+              className="w-full bg-pink-50 border border-pink-200 text-pink-500 font-bold py-4 rounded-2xl text-sm mb-3"
+            >
+              写真・記録を残す
+              <span className="block text-xs font-normal text-pink-300 mt-0.5">ペット情報のみ削除。思い出は残ります。</span>
+            </button>
+
+            <button
+              onClick={handleDeleteAll}
+              className="w-full bg-white border border-gray-200 text-gray-400 font-bold py-4 rounded-2xl text-sm mb-4"
+            >
+              すべて削除する
+              <span className="block text-xs font-normal text-gray-300 mt-0.5">写真・記録を含むすべてのデータを削除します。</span>
+            </button>
+
+            <button onClick={() => setFarewellOpen(false)}
+              className="w-full text-gray-400 text-sm py-2">
+              キャンセル
             </button>
           </div>
         </div>
@@ -381,9 +415,12 @@ export default function PetDetailPage() {
           </button>
         )}
 
-        <button onClick={handleDelete}
-          className="w-full text-red-400 text-sm py-3 border border-red-100 rounded-2xl">
-          このペットを削除する
+        {/* さよならボタン */}
+        <button
+          onClick={() => setFarewellOpen(true)}
+          className="w-full text-gray-400 text-sm py-3 border border-gray-200 rounded-2xl"
+        >
+          この子とさよならする
         </button>
       </div>
     </div>
