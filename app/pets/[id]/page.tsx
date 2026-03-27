@@ -37,6 +37,20 @@ async function getCroppedImg(image: HTMLImageElement, crop: PixelCrop): Promise<
   })
 }
 
+const toLocalDateString = () => {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+const formatHeavenDate = (dateStr: string) => {
+  if (!dateStr) return ''
+  const [y, m, d] = dateStr.split('-')
+  return `${y}年${parseInt(m)}月${parseInt(d)}日`
+}
+
 export default function PetDetailPage() {
   const { user } = useAuth()
   const router = useRouter()
@@ -67,6 +81,7 @@ export default function PetDetailPage() {
     pet_message: '',
     notes: '',
     is_in_heaven: false,
+    heaven_date: '',
   })
 
   useEffect(() => {
@@ -84,6 +99,7 @@ export default function PetDetailPage() {
         pet_message: data.pet_message ?? '',
         notes: data.notes ?? '',
         is_in_heaven: data.is_in_heaven ?? false,
+        heaven_date: data.heaven_date ?? '',
       })
       setPhotoPreview(data.image_url ?? null)
       setLoading(false)
@@ -131,6 +147,7 @@ export default function PetDetailPage() {
         pet_message: form.pet_message || null,
         notes: form.notes || null,
         is_in_heaven: form.is_in_heaven,
+        heaven_date: form.is_in_heaven && form.heaven_date ? form.heaven_date : null,
         image_url,
       }).eq('id', id)
       if (error) throw error
@@ -398,13 +415,13 @@ export default function PetDetailPage() {
           </div>
         </section>
 
-        {/* 編集モード時のみ表示 */}
+        {/* 編集モード */}
         {editing && (
           <>
             {/* 天国トグル */}
             <section>
-              <div className="bg-white rounded-2xl border border-gray-100 px-4 py-4">
-                <div className="flex items-center justify-between mb-2">
+              <div className="bg-white rounded-2xl border border-gray-100 px-4 py-4 space-y-3">
+                <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-gray-600">天国に行きました</span>
                   <button
                     onClick={() => set('is_in_heaven', !form.is_in_heaven)}
@@ -416,6 +433,19 @@ export default function PetDetailPage() {
                 <p className="text-xs text-gray-400 leading-relaxed">
                   天国に行った子は毎日の記録欄には出てきませんが、写真や今までのデータはすべて残ります。
                 </p>
+                {/* 旅立った日 */}
+                {form.is_in_heaven && (
+                  <div className="pt-2 border-t border-gray-50">
+                    <label className="text-xs text-gray-400 block mb-2">旅立った日</label>
+                    <input
+                      type="date"
+                      value={form.heaven_date}
+                      max={toLocalDateString()}
+                      onChange={e => set('heaven_date', e.target.value)}
+                      className="text-sm text-gray-700 bg-gray-50 rounded-lg px-3 py-2 focus:outline-none w-full"
+                    />
+                  </div>
+                )}
               </div>
             </section>
 
@@ -437,6 +467,15 @@ export default function PetDetailPage() {
               この子とさよならする（データ削除）
             </button>
           </>
+        )}
+
+        {/* 閲覧モード：天国メッセージ */}
+        {!editing && form.is_in_heaven && (
+          <div className="bg-pink-50 border border-pink-100 rounded-2xl px-4 py-4 text-center">
+            <p className="text-sm text-pink-400 leading-relaxed">
+              {form.name}は{form.heaven_date ? `${formatHeavenDate(form.heaven_date)}に` : ''}天国に旅立ちました。
+            </p>
+          </div>
         )}
 
         {!editing && message && (
