@@ -158,6 +158,18 @@ export default function HomePage() {
                 </svg>
                 オーナー情報
               </Link>
+              <Link href="/settings/record-items" onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 text-gray-500 text-sm w-full py-3 border-b border-gray-100">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                  <line x1="8" y1="6" x2="21" y2="6"/>
+                  <line x1="8" y1="12" x2="21" y2="12"/>
+                  <line x1="8" y1="18" x2="21" y2="18"/>
+                  <line x1="3" y1="6" x2="3.01" y2="6" strokeWidth={3} strokeLinecap="round"/>
+                  <line x1="3" y1="12" x2="3.01" y2="12" strokeWidth={3} strokeLinecap="round"/>
+                  <line x1="3" y1="18" x2="3.01" y2="18" strokeWidth={3} strokeLinecap="round"/>
+                </svg>
+                日記の項目設定
+              </Link>
               <button onClick={handleSignOut}
                 className="flex items-center gap-3 text-gray-500 text-sm w-full py-3 border-t border-gray-100 mt-4">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
