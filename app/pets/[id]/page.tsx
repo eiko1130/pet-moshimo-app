@@ -66,6 +66,7 @@ export default function PetDetailPage() {
     insurance_info: '',
     pet_message: '',
     notes: '',
+    is_in_heaven: false,
   })
 
   useEffect(() => {
@@ -82,13 +83,14 @@ export default function PetDetailPage() {
         insurance_info: data.insurance_info ?? '',
         pet_message: data.pet_message ?? '',
         notes: data.notes ?? '',
+        is_in_heaven: data.is_in_heaven ?? false,
       })
       setPhotoPreview(data.image_url ?? null)
       setLoading(false)
     })
   }, [user, id])
 
-  const set = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }))
+  const set = (key: string, value: string | boolean) => setForm(f => ({ ...f, [key]: value }))
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget
@@ -128,6 +130,7 @@ export default function PetDetailPage() {
         insurance_info: form.insurance_info || null,
         pet_message: form.pet_message || null,
         notes: form.notes || null,
+        is_in_heaven: form.is_in_heaven,
         image_url,
       }).eq('id', id)
       if (error) throw error
@@ -142,13 +145,11 @@ export default function PetDetailPage() {
   }
 
   const handleDeletePetOnly = async () => {
-    // my_petsのみ削除（pet_recordsは残す）
     await supabase.from('my_pets').delete().eq('id', id)
     router.push('/pets')
   }
 
   const handleDeleteAll = async () => {
-    // pet_recordsも含めて全削除
     await supabase.from('pet_records').delete().eq('pet_id', id)
     await supabase.from('my_pets').delete().eq('id', id)
     router.push('/pets')
@@ -205,7 +206,6 @@ export default function PetDetailPage() {
           <div className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-10" onClick={e => e.stopPropagation()}>
             <p className="text-center text-base font-bold text-gray-700 mb-1">{form.name}とさよならする</p>
             <p className="text-center text-xs text-gray-400 mb-6">どちらにしますか？</p>
-
             <button
               onClick={handleDeletePetOnly}
               className="w-full bg-pink-50 border border-pink-200 text-pink-500 font-bold py-4 rounded-2xl text-sm mb-3"
@@ -213,7 +213,6 @@ export default function PetDetailPage() {
               写真・記録を残す
               <span className="block text-xs font-normal text-pink-300 mt-0.5">ペット情報のみ削除。思い出は残ります。</span>
             </button>
-
             <button
               onClick={handleDeleteAll}
               className="w-full bg-white border border-gray-200 text-gray-400 font-bold py-4 rounded-2xl text-sm mb-4"
@@ -221,7 +220,6 @@ export default function PetDetailPage() {
               すべて削除する
               <span className="block text-xs font-normal text-gray-300 mt-0.5">写真・記録を含むすべてのデータを削除します。</span>
             </button>
-
             <button onClick={() => setFarewellOpen(false)}
               className="w-full text-gray-400 text-sm py-2">
               キャンセル
@@ -293,7 +291,6 @@ export default function PetDetailPage() {
                 <p className="text-sm text-gray-700">{form.name || <span className="text-gray-300">未設定</span>}</p>
               )}
             </div>
-
             <div className="px-4 py-3">
               <label className="text-xs text-gray-400 block mb-1">種類</label>
               {editing ? (
@@ -309,7 +306,6 @@ export default function PetDetailPage() {
                 <p className="text-sm text-gray-700">{form.species || <span className="text-gray-300">未設定</span>}</p>
               )}
             </div>
-
             <div className="px-4 py-3">
               <label className="text-xs text-gray-400 block mb-1">誕生日</label>
               {editing ? (
@@ -355,7 +351,7 @@ export default function PetDetailPage() {
               <div key={item.key} className="px-4 py-3">
                 <label className="text-xs text-gray-400 block mb-1">{item.label}</label>
                 {editing ? (
-                  <input type="text" value={form[item.key as keyof typeof form]}
+                  <input type="text" value={form[item.key as keyof typeof form] as string}
                     onChange={e => set(item.key, e.target.value)}
                     placeholder={item.placeholder}
                     className="w-full text-sm text-gray-700 bg-transparent focus:outline-none" />
@@ -402,26 +398,50 @@ export default function PetDetailPage() {
           </div>
         </section>
 
-        {message && (
-          <p className={`text-xs text-center ${message.includes('保存') ? 'text-green-500' : 'text-pink-400'}`}>
-            {message}
-          </p>
-        )}
-
+        {/* 編集モード時のみ表示 */}
         {editing && (
-          <button onClick={handleSave} disabled={saving}
-            className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base disabled:opacity-50">
-            {saving ? '保存中...' : '保存する'}
-          </button>
+          <>
+            {/* 天国トグル */}
+            <section>
+              <div className="bg-white rounded-2xl border border-gray-100 px-4 py-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-bold text-gray-600">天国に行きました</span>
+                  <button
+                    onClick={() => set('is_in_heaven', !form.is_in_heaven)}
+                    className={`relative w-12 h-6 rounded-full transition-colors ${form.is_in_heaven ? 'bg-[#FFB7C5]' : 'bg-gray-200'}`}
+                  >
+                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.is_in_heaven ? 'translate-x-7' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  天国に行った子は毎日の記録欄には出てきませんが、写真や今までのデータはすべて残ります。
+                </p>
+              </div>
+            </section>
+
+            {message && (
+              <p className={`text-xs text-center ${message.includes('保存') ? 'text-green-500' : 'text-pink-400'}`}>
+                {message}
+              </p>
+            )}
+
+            <button onClick={handleSave} disabled={saving}
+              className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base disabled:opacity-50">
+              {saving ? '保存中...' : '保存する'}
+            </button>
+
+            <button
+              onClick={() => setFarewellOpen(true)}
+              className="w-full text-gray-400 text-sm py-3 border border-gray-200 rounded-2xl"
+            >
+              この子とさよならする（データ削除）
+            </button>
+          </>
         )}
 
-        {/* さよならボタン */}
-        <button
-          onClick={() => setFarewellOpen(true)}
-          className="w-full text-gray-400 text-sm py-3 border border-gray-200 rounded-2xl"
-        >
-          この子とさよならする
-        </button>
+        {!editing && message && (
+          <p className="text-xs text-center text-green-500">{message}</p>
+        )}
       </div>
     </div>
   )
