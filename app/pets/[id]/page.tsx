@@ -154,6 +154,15 @@ export default function PetDetailPage() {
       setEditing(false)
       setMessage('保存しました！')
       setTimeout(() => setMessage(''), 2000)
+      // 保存後に再フェッチして表示を更新
+      const { data: refreshed } = await supabase.from('my_pets').select('*').eq('id', id).single()
+      if (refreshed) {
+        setForm(f => ({
+          ...f,
+          is_in_heaven: refreshed.is_in_heaven ?? false,
+          heaven_date: refreshed.heaven_date ?? '',
+        }))
+      }
     } catch (e: any) {
       setMessage(e.message)
     } finally {
@@ -427,7 +436,10 @@ export default function PetDetailPage() {
                     onClick={() => set('is_in_heaven', !form.is_in_heaven)}
                     className={`relative w-12 h-6 rounded-full transition-colors ${form.is_in_heaven ? 'bg-[#FFB7C5]' : 'bg-gray-200'}`}
                   >
-                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.is_in_heaven ? 'translate-x-7' : 'translate-x-1'}`} />
+                    <span
+                      className="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform"
+                      style={{ transform: form.is_in_heaven ? 'translateX(28px)' : 'translateX(4px)' }}
+                    />
                   </button>
                 </div>
                 <p className="text-xs text-gray-400 leading-relaxed">
