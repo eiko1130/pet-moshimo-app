@@ -434,7 +434,7 @@ export default function PetDetailPage() {
                   <span className="text-sm font-bold text-gray-600">天国に行きました</span>
                   <button
                     onClick={() => set('is_in_heaven', !form.is_in_heaven)}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${form.is_in_heaven ? 'bg-[#FFB7C5]' : 'bg-gray-200'}`}
+                    className={`relative w-12 h-6 rounded-full transition-colors overflow-hidden ${form.is_in_heaven ? 'bg-[#FFB7C5]' : 'bg-gray-200'}`}
                   >
                     <span
                       className="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform"
