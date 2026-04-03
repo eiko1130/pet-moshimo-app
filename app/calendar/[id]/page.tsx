@@ -50,6 +50,10 @@ export default function RecordDetailPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
+  // 項目設定
+  const [weightUnit, setWeightUnit] = useState('kg')
+  const [freeLabels, setFreeLabels] = useState({ free1: '', free2: '', free3: '' })
+
   useEffect(() => {
     if (!user || !id) return
     supabase.from('my_pets').select('*').then(({ data }) => setPets(data ?? []))
@@ -61,6 +65,21 @@ export default function RecordDetailPage() {
       setExtraPetIds(data.extra_pet_ids ?? [])
       setPhotoPreview(data.image_url ?? null)
     })
+    supabase
+      .from('moshimo_info')
+      .select('weight_unit, free_item1_label, free_item2_label, free_item3_label')
+      .eq('user_id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setWeightUnit(data.weight_unit ?? 'kg')
+          setFreeLabels({
+            free1: data.free_item1_label ?? '',
+            free2: data.free_item2_label ?? '',
+            free3: data.free_item3_label ?? '',
+          })
+        }
+      })
   }, [user, id])
 
   useEffect(() => {
@@ -68,7 +87,6 @@ export default function RecordDetailPage() {
     const currentPet = pets.find(p => p.id === record.pet_id)
     setPet(currentPet ?? null)
 
-    // 同じ日の他のペットの記録
     supabase
       .from('pet_records')
       .select('*')
@@ -76,7 +94,6 @@ export default function RecordDetailPage() {
       .neq('id', record.id)
       .then(({ data }) => setSameDayRecords(data ?? []))
 
-    // 同じペットの前の記録
     supabase
       .from('pet_records')
       .select('*')
@@ -86,7 +103,6 @@ export default function RecordDetailPage() {
       .limit(1)
       .then(({ data }) => setPrevRecord(data?.[0] ?? null))
 
-    // 同じペットの次の記録
     supabase
       .from('pet_records')
       .select('*')
@@ -136,6 +152,34 @@ export default function RecordDetailPage() {
     }
   }
 
+  // 記録項目の表示用データを組み立てる
+  const buildRecordItems = () => {
+    if (!record) return []
+    const items: { label: string; value: string; note?: string }[] = []
+
+    if (record.weight != null)
+      items.push({ label: '体重', value: `${record.weight} ${weightUnit}` })
+    if (record.temperature != null)
+      items.push({ label: '体温', value: `${record.temperature} ℃` })
+    if (record.no_appetite)
+      items.push({ label: '食欲がない', value: 'あり', note: record.no_appetite_note ?? undefined })
+    if (record.abnormal_excretion)
+      items.push({ label: '排泄の異常', value: 'あり', note: record.abnormal_excretion_note ?? undefined })
+    if (record.vomit)
+      items.push({ label: '嘔吐', value: 'あり', note: record.vomit_note ?? undefined })
+    if (record.nail_trimming)
+      items.push({ label: '爪切り', value: 'あり', note: record.nail_trimming_note ?? undefined })
+    if (record.free_item1_value && freeLabels.free1)
+      items.push({ label: freeLabels.free1, value: 'あり', note: record.free_item1_note ?? undefined })
+    if (record.free_item2_value && freeLabels.free2)
+      items.push({ label: freeLabels.free2, value: 'あり', note: record.free_item2_note ?? undefined })
+    if (record.free_item3_value && freeLabels.free3)
+      items.push({ label: freeLabels.free3, value: 'あり', note: record.free_item3_note ?? undefined })
+
+    return items
+  }
+
+  const recordItems = buildRecordItems()
   const otherPets = pets.filter(p => p.id !== record?.pet_id)
   const moodInfo = MOODS.find(m => m.value === (editing ? mood : record?.mood))
 
@@ -173,7 +217,7 @@ export default function RecordDetailPage() {
       </header>
 
       <div className="px-5 py-5 space-y-4">
-        {/* 写真（一番上・大きめ） */}
+        {/* 写真 */}
         <div className="rounded-2xl overflow-hidden bg-gray-100">
           {editing ? (
             <label className="cursor-pointer block">
@@ -250,6 +294,26 @@ export default function RecordDetailPage() {
             </div>
           )}
         </div>
+
+        {/* 記録項目（値があるものだけ表示） */}
+        {recordItems.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-4">
+            <label className="text-sm font-bold text-gray-600 block mb-3">記録項目</label>
+            <div className="divide-y divide-gray-50">
+              {recordItems.map((item, i) => (
+                <div key={i} className="py-2.5 first:pt-0 last:pb-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">{item.label}</span>
+                    <span className="text-sm font-medium text-gray-700">{item.value}</span>
+                  </div>
+                  {item.note && (
+                    <p className="text-xs text-gray-400 mt-1">{item.note}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* メモ */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
