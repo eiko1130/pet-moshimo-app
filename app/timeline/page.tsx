@@ -8,27 +8,40 @@ import BottomNav from '@/components/BottomNav'
 import type { Pet, PetRecord } from '@/types'
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
-
 type Tab = 'timeline' | 'calendar' | 'gallery'
 
-const MoodIcon = ({ mood, active }: { mood: string | null; active?: boolean }) => {
-  const color = active ? 'white' : mood === 'good' ? '#4ade80' : mood === 'normal' ? '#facc15' : mood === 'bad' ? '#f87171' : '#d1d5db'
+const moodLabel = (mood: string | null) => {
+  if (mood === 'good') return '元気いっぱい'
+  if (mood === 'normal') return '普通'
+  if (mood === 'bad') return '体調注意'
+  return ''
+}
+
+const moodColor = (mood: string | null) => {
+  if (mood === 'good') return 'text-green-500'
+  if (mood === 'normal') return 'text-yellow-500'
+  if (mood === 'bad') return 'text-red-400'
+  return 'text-gray-400'
+}
+
+const MoodIcon = ({ mood }: { mood: string | null }) => {
+  const color = mood === 'good' ? '#4ade80' : mood === 'normal' ? '#facc15' : mood === 'bad' ? '#f87171' : '#d1d5db'
   if (mood === 'good') return (
-    <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} className="w-5 h-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} className="w-4 h-4">
       <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/>
       <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
       <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
     </svg>
   )
   if (mood === 'normal') return (
-    <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} className="w-5 h-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} className="w-4 h-4">
       <circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/>
       <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
       <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
     </svg>
   )
   if (mood === 'bad') return (
-    <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} className="w-5 h-5">
+    <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} className="w-4 h-4">
       <circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/>
       <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
       <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth={3} strokeLinecap="round"/>
@@ -37,11 +50,120 @@ const MoodIcon = ({ mood, active }: { mood: string | null; active?: boolean }) =
   return null
 }
 
-const moodLabel = (mood: string | null) => {
-  if (mood === 'good') return '元気いっぱい'
-  if (mood === 'normal') return '普通'
-  if (mood === 'bad') return '体調注意'
-  return '-'
+// 記録項目のサマリーを組み立てる
+const buildItemSummary = (
+  record: PetRecord,
+  weightUnit: string,
+  freeLabels: { free1: string; free2: string; free3: string }
+): string[] => {
+  const items: string[] = []
+  if (record.weight) items.push(`体重 ${record.weight}${weightUnit}`)
+  if (record.temperature) items.push(`体温 ${record.temperature}℃`)
+  if (record.no_appetite) items.push('食欲なし')
+  if (record.abnormal_excretion) items.push('排泄異常')
+  if (record.vomit) items.push('嘔吐')
+  if (record.nail_trimming) items.push('爪切り')
+  if (record.free_item1_value && freeLabels.free1) items.push(freeLabels.free1)
+  if (record.free_item2_value && freeLabels.free2) items.push(freeLabels.free2)
+  if (record.free_item3_value && freeLabels.free3) items.push(freeLabels.free3)
+  return items
+}
+
+// タイムラインカード
+const TimelineCard = ({
+  record, pet, weightUnit, freeLabels, onClick
+}: {
+  record: PetRecord
+  pet: Pet | undefined
+  weightUnit: string
+  freeLabels: { free1: string; free2: string; free3: string }
+  onClick: () => void
+}) => {
+  const [expanded, setExpanded] = useState(false)
+  const photoUrl = record.image_url
+  const avatarUrl = pet?.image_url ?? null
+  const itemSummary = buildItemSummary(record, weightUnit, freeLabels)
+  const MEMO_LIMIT = 60
+  const isLong = (record.memo ?? '').length > MEMO_LIMIT
+
+  const d = new Date(record.date + 'T00:00:00')
+  const dateLabel = `${d.getMonth() + 1}月${d.getDate()}日（${WEEKDAYS[d.getDay()]}）`
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      {/* 写真（あれば全幅で大きく） */}
+      {photoUrl && (
+        <button onClick={onClick} className="block w-full">
+          <div className="relative w-full aspect-square">
+            <Image
+              src={photoUrl}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 512px"
+            />
+          </div>
+        </button>
+      )}
+
+      {/* カード本文 */}
+      <div className="p-4">
+        {/* ヘッダー：アバター・名前・日付・ごきげん */}
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-pink-50 shrink-0">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm">🐱</div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-bold text-gray-700 text-sm">{pet?.name ?? '不明'}</span>
+              <span className="text-xs text-gray-400">{dateLabel}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <MoodIcon mood={record.mood} />
+            <span className={`text-xs font-medium ${moodColor(record.mood)}`}>
+              {moodLabel(record.mood)}
+            </span>
+          </div>
+        </div>
+
+        {/* 記録項目サマリー */}
+        {itemSummary.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {itemSummary.map((item, i) => (
+              <span
+                key={i}
+                className="text-xs bg-pink-50 text-[#FFB7C5] px-2 py-0.5 rounded-full"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* メモ */}
+        {record.memo && (
+          <div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {expanded || !isLong ? record.memo : record.memo.slice(0, MEMO_LIMIT) + '…'}
+            </p>
+            {isLong && (
+              <button
+                onClick={() => setExpanded(v => !v)}
+                className="text-xs text-[#FFB7C5] mt-1"
+              >
+                {expanded ? '閉じる' : '続きを見る'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function TimelinePage() {
@@ -51,6 +173,8 @@ export default function TimelinePage() {
   const [pets, setPets] = useState<Pet[]>([])
   const [records, setRecords] = useState<PetRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [weightUnit, setWeightUnit] = useState('kg')
+  const [freeLabels, setFreeLabels] = useState({ free1: '', free2: '', free3: '' })
 
   // カレンダー用
   const [year, setYear] = useState(new Date().getFullYear())
@@ -67,7 +191,6 @@ export default function TimelinePage() {
   const toDateStr = (y: number, m: number, d: number) =>
     `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 
-  // 共通：ペット・タイムライン記録取得
   useEffect(() => {
     if (!user) return
     supabase.from('my_pets').select('*').order('created_at').then(({ data }) => setPets(data ?? []))
@@ -79,9 +202,23 @@ export default function TimelinePage() {
         setRecords(data ?? [])
         setLoading(false)
       })
+    supabase
+      .from('moshimo_info')
+      .select('weight_unit, free_item1_label, free_item2_label, free_item3_label')
+      .eq('user_id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setWeightUnit(data.weight_unit ?? 'kg')
+          setFreeLabels({
+            free1: data.free_item1_label ?? '',
+            free2: data.free_item2_label ?? '',
+            free3: data.free_item3_label ?? '',
+          })
+        }
+      })
   }, [user])
 
-  // カレンダー用：月ごとの記録取得
   useEffect(() => {
     if (!user) return
     const from = toDateStr(year, month, 1)
@@ -95,7 +232,6 @@ export default function TimelinePage() {
       .then(({ data }) => setCalRecords(data ?? []))
   }, [user, year, month])
 
-  // ギャラリー用：写真グループ化
   useEffect(() => {
     const photoRecords = records.filter(r => r.image_url)
     let filtered = photoRecords
@@ -112,30 +248,19 @@ export default function TimelinePage() {
       if (!map[ym]) map[ym] = []
       map[ym].push(r)
     })
-    const result = Object.entries(map).map(([ym, photos]) => {
-      const [y, m] = ym.split('-')
-      return { yearMonth: ym, label: `${y}年 ${parseInt(m)}月`, photos }
-    })
-    setGroups(result)
+    setGroups(
+      Object.entries(map).map(([ym, photos]) => {
+        const [y, m] = ym.split('-')
+        return { yearMonth: ym, label: `${y}年 ${parseInt(m)}月`, photos }
+      })
+    )
   }, [records, selectedPetId])
 
   const getPet = (petId: string) => pets.find(p => p.id === petId)
 
-  // タイムライン：日付でグループ化
-  const timelineGroups: { date: string; records: PetRecord[] }[] = []
-  const dateMap: Record<string, PetRecord[]> = {}
-  records.forEach(r => {
-    if (!dateMap[r.date]) dateMap[r.date] = []
-    dateMap[r.date].push(r)
-  })
-  Object.entries(dateMap)
-    .sort(([a], [b]) => b.localeCompare(a))
-    .forEach(([date, recs]) => timelineGroups.push({ date, records: recs }))
-
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + 'T00:00:00')
-    const wd = WEEKDAYS[d.getDay()]
-    return `${d.getMonth() + 1}月${d.getDate()}日（${wd}）`
+    return `${d.getMonth() + 1}月${d.getDate()}日（${WEEKDAYS[d.getDay()]}）`
   }
 
   // カレンダー用
@@ -163,7 +288,6 @@ export default function TimelinePage() {
     else setMonth(m => m + 1)
   }
 
-  // ギャラリー用
   const currentIndex = popupRecord ? flatPhotos.findIndex(r => r.id === popupRecord.id) : -1
   const prevPhoto = currentIndex > 0 ? flatPhotos[currentIndex - 1] : null
   const nextPhoto = currentIndex < flatPhotos.length - 1 ? flatPhotos[currentIndex + 1] : null
@@ -174,8 +298,8 @@ export default function TimelinePage() {
         タイムライン
       </header>
 
-      {/* タブ切り替え */}
-      <div className="flex bg-white border-b border-gray-100">
+      {/* タブ */}
+      <div className="flex bg-white border-b border-gray-100 sticky top-0 z-10">
         {([
           { key: 'timeline', label: 'タイムライン' },
           { key: 'calendar', label: 'カレンダー' },
@@ -185,9 +309,7 @@ export default function TimelinePage() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.key
-                ? 'border-[#FFB7C5] text-[#FFB7C5]'
-                : 'border-transparent text-gray-400'
+              tab === t.key ? 'border-[#FFB7C5] text-[#FFB7C5]' : 'border-transparent text-gray-400'
             }`}
           >
             {t.label}
@@ -197,12 +319,12 @@ export default function TimelinePage() {
 
       {/* ─── タイムライン ─── */}
       {tab === 'timeline' && (
-        <div className="px-4 py-4">
+        <div className="px-4 py-4 space-y-4">
           {loading ? (
             <div className="flex justify-center mt-10">
               <div className="w-8 h-8 border-2 border-[#FFB7C5] border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : timelineGroups.length === 0 ? (
+          ) : records.length === 0 ? (
             <div className="flex flex-col items-center justify-center mt-20 gap-3 text-gray-400">
               <p className="text-sm text-center">まだ記録がありません。<br/>毎日の記録をつけてみましょう。</p>
               <button
@@ -213,54 +335,16 @@ export default function TimelinePage() {
               </button>
             </div>
           ) : (
-            <div className="space-y-6">
-              {timelineGroups.map(group => (
-                <div key={group.date}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 rounded-full bg-[#FFB7C5]" />
-                    <span className="text-sm font-bold text-gray-600">{formatDate(group.date)}</span>
-                    {group.date === today && (
-                      <span className="text-xs bg-[#FFB7C5] text-white px-2 py-0.5 rounded-full">今日</span>
-                    )}
-                  </div>
-                  <div className="space-y-2 pl-4">
-                    {group.records.map(record => {
-                      const pet = getPet(record.pet_id)
-                      const thumbUrl = record.image_url || pet?.image_url || null
-                      return (
-                        <button
-                          key={record.id}
-                          onClick={() => router.push(`/calendar/${record.id}`)}
-                          className="w-full bg-white rounded-2xl border border-gray-100 p-3 text-left"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-pink-50 shrink-0">
-                              {thumbUrl ? (
-                                <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-xl">🐱</div>
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="font-bold text-gray-700 text-sm">{pet?.name ?? '不明'}</span>
-                                <div className="flex items-center gap-1">
-                                  <MoodIcon mood={record.mood} />
-                                  <span className="text-xs text-gray-400">{moodLabel(record.mood)}</span>
-                                </div>
-                              </div>
-                              {record.memo && (
-                                <p className="text-xs text-gray-500 line-clamp-2">{record.memo}</p>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
+            records.map(record => (
+              <TimelineCard
+                key={record.id}
+                record={record}
+                pet={getPet(record.pet_id)}
+                weightUnit={weightUnit}
+                freeLabels={freeLabels}
+                onClick={() => router.push(`/calendar/${record.id}`)}
+              />
+            ))
           )}
         </div>
       )}
@@ -369,10 +453,7 @@ export default function TimelinePage() {
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-bold text-gray-700 text-sm">{pet?.name ?? '不明'}</span>
-                            <div className="flex items-center gap-1">
-                              <MoodIcon mood={record.mood} />
-                              <span className="text-xs text-gray-500">{moodLabel(record.mood)}</span>
-                            </div>
+                            <span className={`text-xs ${moodColor(record.mood)}`}>{moodLabel(record.mood)}</span>
                           </div>
                           {record.memo && (
                             <p className="text-xs text-gray-500 line-clamp-2">{record.memo}</p>
@@ -425,14 +506,13 @@ export default function TimelinePage() {
               ))}
             </div>
           )}
-
           {loading ? (
             <div className="flex justify-center mt-10">
               <div className="w-8 h-8 border-2 border-[#FFB7C5] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : groups.length === 0 ? (
             <div className="flex flex-col items-center justify-center mt-20 gap-4 text-gray-400">
-              <p className="text-sm text-center">写真はまだありません。<br/>毎日の健康記録から写真を登録しましょう。</p>
+              <p className="text-sm text-center">写真はまだありません。<br/>毎日の記録から写真を登録しましょう。</p>
               <button
                 onClick={() => router.push('/record')}
                 className="bg-[#FFB7C5] text-white px-5 py-3 rounded-2xl text-sm font-bold"
@@ -446,7 +526,7 @@ export default function TimelinePage() {
                 <div key={group.yearMonth}>
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-bold text-[#FFB7C5]">{group.label}</h3>
-                    <span className="text-xs text-gray-400">{group.photos.length}枚の写真</span>
+                    <span className="text-xs text-gray-400">{group.photos.length}枚</span>
                   </div>
                   <div className="grid grid-cols-3 gap-1">
                     {group.photos.map(photo => (
@@ -511,10 +591,6 @@ export default function TimelinePage() {
                 onClick={() => router.push(`/calendar/${popupRecord.id}`)}
                 className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-[#FFB7C5] rounded-xl text-white text-xs font-medium"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
-                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                </svg>
                 この日の日記
               </button>
               <button
@@ -532,7 +608,7 @@ export default function TimelinePage() {
         </div>
       )}
 
-      {/* 記録追加FAB */}
+      {/* FAB */}
       <button
         onClick={() => router.push('/record')}
         className="fixed bottom-20 right-5 w-12 h-12 bg-[#FFB7C5] rounded-full shadow-lg flex items-center justify-center text-white"
