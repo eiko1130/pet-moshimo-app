@@ -82,7 +82,7 @@ export default function MoshimoInfoPage() {
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <span className="font-bold">もしもの時のために</span>
+        <span className="font-bold">オーナー情報</span>
         <div className="w-6" />
       </header>
 
