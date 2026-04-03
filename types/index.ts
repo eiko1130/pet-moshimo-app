@@ -25,6 +25,23 @@ export type PetRecord = {
   extra_pet_ids: string[] | null
   date: string
   created_at: string
+  // 記録項目
+  weight: number | null
+  temperature: number | null
+  no_appetite: boolean | null
+  no_appetite_note: string | null
+  abnormal_excretion: boolean | null
+  abnormal_excretion_note: string | null
+  vomit: boolean | null
+  vomit_note: string | null
+  nail_trimming: boolean | null
+  nail_trimming_note: string | null
+  free_item1_value: boolean | null
+  free_item1_note: string | null
+  free_item2_value: boolean | null
+  free_item2_note: string | null
+  free_item3_value: boolean | null
+  free_item3_note: string | null
   pet?: Pet
 }
 
