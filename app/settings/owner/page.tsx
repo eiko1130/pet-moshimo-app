@@ -17,9 +17,6 @@ export default function MoshimoInfoPage() {
     hospital_name: '',
     hospital_phone: '',
     message: '',
-    proxy_name: '',
-    proxy_phone: '',
-    proxy_email: '',
   })
 
   useEffect(() => {
@@ -37,9 +34,6 @@ export default function MoshimoInfoPage() {
           hospital_name: data.hospital_name ?? '',
           hospital_phone: data.hospital_phone ?? '',
           message: data.message ?? '',
-          proxy_name: data.proxy_name ?? '',
-          proxy_phone: data.proxy_phone ?? '',
-          proxy_email: data.proxy_email ?? '',
         })
         setLoading(false)
       })
@@ -163,35 +157,6 @@ export default function MoshimoInfoPage() {
                 className="w-full text-sm text-gray-700 bg-transparent focus:outline-none resize-none"
               />
             </div>
-          </div>
-        </section>
-
-        {/* 緊急連絡先 */}
-        <section>
-          <h2 className="text-sm font-bold text-[#FFB7C5] mb-3 flex items-center gap-2">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-            </svg>
-            緊急連絡先
-          </h2>
-          <p className="text-xs text-gray-400 mb-2">もしもの時に連絡する方の情報を登録してください。</p>
-          <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
-            {[
-              { label: '名前', key: 'proxy_name', placeholder: '佐藤 太郎', type: 'text' },
-              { label: '電話番号', key: 'proxy_phone', placeholder: '090-0000-0000', type: 'tel' },
-              { label: 'メールアドレス', key: 'proxy_email', placeholder: 'taro@example.com', type: 'email' },
-            ].map(item => (
-              <div key={item.key} className="px-4 py-3">
-                <label className="text-xs text-gray-400 block mb-1">{item.label}</label>
-                <input
-                  type={item.type}
-                  value={form[item.key as keyof typeof form]}
-                  onChange={e => set(item.key, e.target.value)}
-                  placeholder={item.placeholder}
-                  className="w-full text-sm text-gray-700 bg-transparent focus:outline-none"
-                />
-              </div>
-            ))}
           </div>
         </section>
 
