@@ -20,8 +20,6 @@ export default function MoshimoInfoPage() {
     proxy_name: '',
     proxy_phone: '',
     proxy_email: '',
-    alert_enabled: false,
-    alert_hours: 24,
   })
 
   useEffect(() => {
@@ -42,14 +40,12 @@ export default function MoshimoInfoPage() {
           proxy_name: data.proxy_name ?? '',
           proxy_phone: data.proxy_phone ?? '',
           proxy_email: data.proxy_email ?? '',
-          alert_enabled: data.alert_enabled ?? false,
-          alert_hours: data.alert_hours ?? 24,
         })
         setLoading(false)
       })
   }, [user])
 
-  const set = (key: string, value: string | boolean | number) =>
+  const set = (key: string, value: string) =>
     setForm(f => ({ ...f, [key]: value }))
 
   const handleSave = async () => {
@@ -98,7 +94,7 @@ export default function MoshimoInfoPage() {
 
       <div className="mx-5 mt-5 bg-pink-50 rounded-2xl p-4">
         <p className="text-xs text-gray-500 leading-relaxed">
-          🐾 もし私に何かあったとき、このページの情報をもとにペットのお世話をお願いします。緊急連絡先に登録した方に情報が共有されます。
+          もし私に何かあったとき、このページの情報をもとにペットのお世話をお願いします。緊急連絡先に登録した方に情報が共有されます。
         </p>
       </div>
 
@@ -123,7 +119,7 @@ export default function MoshimoInfoPage() {
                 <label className="text-xs text-gray-400 block mb-1">{item.label}</label>
                 <input
                   type="text"
-                  value={form[item.key as keyof typeof form] as string}
+                  value={form[item.key as keyof typeof form]}
                   onChange={e => set(item.key, e.target.value)}
                   placeholder={item.placeholder}
                   className="w-full text-sm text-gray-700 bg-transparent focus:outline-none"
@@ -150,7 +146,7 @@ export default function MoshimoInfoPage() {
                 <label className="text-xs text-gray-400 block mb-1">{item.label}</label>
                 <input
                   type="text"
-                  value={form[item.key as keyof typeof form] as string}
+                  value={form[item.key as keyof typeof form]}
                   onChange={e => set(item.key, e.target.value)}
                   placeholder={item.placeholder}
                   className="w-full text-sm text-gray-700 bg-transparent focus:outline-none"
@@ -189,68 +185,13 @@ export default function MoshimoInfoPage() {
                 <label className="text-xs text-gray-400 block mb-1">{item.label}</label>
                 <input
                   type={item.type}
-                  value={form[item.key as keyof typeof form] as string}
+                  value={form[item.key as keyof typeof form]}
                   onChange={e => set(item.key, e.target.value)}
                   placeholder={item.placeholder}
                   className="w-full text-sm text-gray-700 bg-transparent focus:outline-none"
                 />
               </div>
             ))}
-          </div>
-        </section>
-
-        {/* アラート設定 */}
-        <section>
-          <h2 className="text-sm font-bold text-[#FFB7C5] mb-3 flex items-center gap-2">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-            緊急アラート設定
-          </h2>
-          <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
-            {/* オン/オフ */}
-            <div className="px-4 py-3 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-700 font-medium">アラートを有効にする</p>
-                <p className="text-xs text-gray-400 mt-0.5">一定時間記録がない場合に緊急連絡先へメールを送信</p>
-              </div>
-              <button
-                onClick={() => set('alert_enabled', !form.alert_enabled)}
-                className={`w-12 h-6 rounded-full transition-all relative shrink-0 ml-3 ${
-                  form.alert_enabled ? 'bg-[#FFB7C5]' : 'bg-gray-200'
-                }`}
-              >
-                <div className={`w-5 h-5 bg-white rounded-full shadow absolute top-0.5 transition-all ${
-                  form.alert_enabled ? 'left-6' : 'left-0.5'
-                }`} />
-              </button>
-            </div>
-
-            {/* 時間選択 */}
-            {form.alert_enabled && (
-              <div className="px-4 py-3">
-                <p className="text-sm text-gray-700 font-medium mb-2">アラートを送るまでの時間</p>
-                <div className="flex gap-3">
-                  {[24, 48].map(h => (
-                    <button
-                      key={h}
-                      onClick={() => set('alert_hours', h)}
-                      className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold transition-all ${
-                        form.alert_hours === h
-                          ? 'bg-[#FFB7C5] border-[#FFB7C5] text-white'
-                          : 'bg-white border-gray-100 text-gray-400'
-                      }`}
-                    >
-                      {h}時間
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  最後の記録から{form.alert_hours}時間以上更新がない場合、{form.proxy_name || '緊急連絡先'}へメールを送信します
-                </p>
-              </div>
-            )}
           </div>
         </section>
 
