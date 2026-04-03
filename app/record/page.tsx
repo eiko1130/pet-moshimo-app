@@ -71,18 +71,60 @@ function RecordPageInner() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
+  // 項目設定
+  const [recordItems, setRecordItems] = useState<string[]>([])
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'g'>('kg')
+  const [freeLabels, setFreeLabels] = useState({ free1: '', free2: '', free3: '' })
+
+  // 各項目の入力値
+  const [weight, setWeight] = useState('')
+  const [temperature, setTemperature] = useState('')
+  const [noAppetite, setNoAppetite] = useState(false)
+  const [noAppetiteNote, setNoAppetiteNote] = useState('')
+  const [abnormalExcretion, setAbnormalExcretion] = useState(false)
+  const [abnormalExcretionNote, setAbnormalExcretionNote] = useState('')
+  const [vomit, setVomit] = useState(false)
+  const [vomitNote, setVomitNote] = useState('')
+  const [nailTrimming, setNailTrimming] = useState(false)
+  const [nailTrimmingNote, setNailTrimmingNote] = useState('')
+  const [free1Value, setFree1Value] = useState(false)
+  const [free1Note, setFree1Note] = useState('')
+  const [free2Value, setFree2Value] = useState(false)
+  const [free2Note, setFree2Note] = useState('')
+  const [free3Value, setFree3Value] = useState(false)
+  const [free3Note, setFree3Note] = useState('')
+
   useEffect(() => {
     if (!user) return
     const petId = searchParams.get('petId')
+
+    // ペット取得
     supabase.from('my_pets').select('*').eq('user_id', user.id).order('created_at').then(({ data }) => {
       const list = data ?? []
       setPets(list)
       if (list.length > 0) {
-        // petIdが指定されていればその子を初期選択、なければ先頭
         const target = petId ? list.find(p => p.id === petId) ?? list[0] : list[0]
         setSelectedPet(target)
       }
     })
+
+    // 項目設定取得
+    supabase
+      .from('moshimo_info')
+      .select('record_items, weight_unit, free_item1_label, free_item2_label, free_item3_label')
+      .eq('user_id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setRecordItems(data.record_items ?? [])
+          setWeightUnit(data.weight_unit ?? 'kg')
+          setFreeLabels({
+            free1: data.free_item1_label ?? '',
+            free2: data.free_item2_label ?? '',
+            free3: data.free_item3_label ?? '',
+          })
+        }
+      })
   }, [user])
 
   const toggleExtraPet = (id: string) => {
@@ -91,7 +133,7 @@ function RecordPageInner() {
     )
   }
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setPhotoFile(file)
@@ -121,6 +163,7 @@ function RecordPageInner() {
           image_url = data.publicUrl
         }
       }
+
       const { error } = await supabase.from('pet_records').insert({
         user_id: user.id,
         pet_id: selectedPet.id,
@@ -129,6 +172,23 @@ function RecordPageInner() {
         image_url,
         date,
         extra_pet_ids: extraPetIds.length > 0 ? extraPetIds : null,
+        // 項目設定で有効な項目のみ保存
+        weight: recordItems.includes('weight') && weight ? parseFloat(weight) : null,
+        temperature: recordItems.includes('temperature') && temperature ? parseFloat(temperature) : null,
+        no_appetite: recordItems.includes('no_appetite') ? noAppetite : null,
+        no_appetite_note: recordItems.includes('no_appetite') && noAppetiteNote ? noAppetiteNote : null,
+        abnormal_excretion: recordItems.includes('abnormal_excretion') ? abnormalExcretion : null,
+        abnormal_excretion_note: recordItems.includes('abnormal_excretion') && abnormalExcretionNote ? abnormalExcretionNote : null,
+        vomit: recordItems.includes('vomit') ? vomit : null,
+        vomit_note: recordItems.includes('vomit') && vomitNote ? vomitNote : null,
+        nail_trimming: recordItems.includes('nail_trimming') ? nailTrimming : null,
+        nail_trimming_note: recordItems.includes('nail_trimming') && nailTrimmingNote ? nailTrimmingNote : null,
+        free_item1_value: freeLabels.free1 ? free1Value : null,
+        free_item1_note: freeLabels.free1 && free1Note ? free1Note : null,
+        free_item2_value: freeLabels.free2 ? free2Value : null,
+        free_item2_note: freeLabels.free2 && free2Note ? free2Note : null,
+        free_item3_value: freeLabels.free3 ? free3Value : null,
+        free_item3_note: freeLabels.free3 && free3Note ? free3Note : null,
       })
       if (error) throw error
       setMessage('記録しました！')
@@ -137,6 +197,22 @@ function RecordPageInner() {
       setPhotoFile(null)
       setPhotoPreview(null)
       setExtraPetIds([])
+      setWeight('')
+      setTemperature('')
+      setNoAppetite(false)
+      setNoAppetiteNote('')
+      setAbnormalExcretion(false)
+      setAbnormalExcretionNote('')
+      setVomit(false)
+      setVomitNote('')
+      setNailTrimming(false)
+      setNailTrimmingNote('')
+      setFree1Value(false)
+      setFree1Note('')
+      setFree2Value(false)
+      setFree2Note('')
+      setFree3Value(false)
+      setFree3Note('')
       setTimeout(() => router.push('/'), 1000)
     } catch (e: any) {
       setMessage(e.message)
@@ -144,6 +220,42 @@ function RecordPageInner() {
       setLoading(false)
     }
   }
+
+  // チェックボックス項目のUI部品
+  const CheckItem = ({
+    label, checked, onToggle, note, onNote, notePlaceholder
+  }: {
+    label: string
+    checked: boolean
+    onToggle: () => void
+    note: string
+    onNote: (v: string) => void
+    notePlaceholder?: string
+  }) => (
+    <div className="px-4 py-3 border-b border-gray-50 last:border-0">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-700">{label}</span>
+        <button
+          onClick={onToggle}
+          className={`relative w-12 h-6 rounded-full transition-colors ${checked ? 'bg-[#FFB7C5]' : 'bg-gray-200'}`}
+        >
+          <span
+            className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform"
+            style={{ transform: checked ? 'translateX(20px)' : 'translateX(0px)' }}
+          />
+        </button>
+      </div>
+      {checked && (
+        <input
+          type="text"
+          value={note}
+          onChange={e => onNote(e.target.value)}
+          placeholder={notePlaceholder ?? 'メモ（任意）'}
+          className="mt-2 w-full text-xs bg-gray-50 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-pink-200"
+        />
+      )}
+    </div>
+  )
 
   const otherPets = pets.filter(p => p.id !== selectedPet?.id)
 
@@ -155,7 +267,7 @@ function RecordPageInner() {
 
       {selectedPet && (
         <div className="mx-5 mt-4 bg-pink-50 rounded-xl px-4 py-3 text-sm text-[#FFB7C5] font-medium">
-          {selectedPet.name} の健康記録を教えてください。
+          {selectedPet.name} の記録をつけましょう。
         </div>
       )}
 
@@ -190,6 +302,7 @@ function RecordPageInner() {
       )}
 
       <div className="px-5 py-4 space-y-4">
+        {/* 日付 */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <label className="text-sm font-bold text-gray-600 block mb-2">記録する日</label>
           <div className="flex items-center gap-2 text-gray-600">
@@ -209,6 +322,7 @@ function RecordPageInner() {
           </div>
         </div>
 
+        {/* ごきげん（必須） */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <div className="flex items-center justify-between mb-3">
             <label className="text-sm font-bold text-gray-600">今日のごきげん</label>
@@ -232,6 +346,128 @@ function RecordPageInner() {
           </div>
         </div>
 
+        {/* 追加項目（設定で有効なもののみ） */}
+        {(recordItems.length > 0 || freeLabels.free1 || freeLabels.free2 || freeLabels.free3) && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-4">
+            <label className="text-sm font-bold text-gray-600 block mb-3">記録項目</label>
+            <div className="divide-y divide-gray-50 -mx-4">
+
+              {recordItems.includes('weight') && (
+                <div className="px-4 py-3 border-b border-gray-50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">体重</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={weight}
+                        onChange={e => setWeight(e.target.value)}
+                        placeholder="0.00"
+                        step="0.01"
+                        className="w-20 text-sm text-right bg-gray-50 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-pink-200"
+                      />
+                      <span className="text-xs text-gray-400">{weightUnit}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {recordItems.includes('temperature') && (
+                <div className="px-4 py-3 border-b border-gray-50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">体温</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={temperature}
+                        onChange={e => setTemperature(e.target.value)}
+                        placeholder="38.5"
+                        step="0.1"
+                        className="w-20 text-sm text-right bg-gray-50 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-pink-200"
+                      />
+                      <span className="text-xs text-gray-400">℃</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {recordItems.includes('no_appetite') && (
+                <CheckItem
+                  label="食欲がない"
+                  checked={noAppetite}
+                  onToggle={() => setNoAppetite(v => !v)}
+                  note={noAppetiteNote}
+                  onNote={setNoAppetiteNote}
+                  notePlaceholder="どのくらい食べなかったか"
+                />
+              )}
+
+              {recordItems.includes('abnormal_excretion') && (
+                <CheckItem
+                  label="排泄の異常"
+                  checked={abnormalExcretion}
+                  onToggle={() => setAbnormalExcretion(v => !v)}
+                  note={abnormalExcretionNote}
+                  onNote={setAbnormalExcretionNote}
+                  notePlaceholder="どんな異常があったか"
+                />
+              )}
+
+              {recordItems.includes('vomit') && (
+                <CheckItem
+                  label="嘔吐"
+                  checked={vomit}
+                  onToggle={() => setVomit(v => !v)}
+                  note={vomitNote}
+                  onNote={setVomitNote}
+                  notePlaceholder="回数・様子など"
+                />
+              )}
+
+              {recordItems.includes('nail_trimming') && (
+                <CheckItem
+                  label="爪切り"
+                  checked={nailTrimming}
+                  onToggle={() => setNailTrimming(v => !v)}
+                  note={nailTrimmingNote}
+                  onNote={setNailTrimmingNote}
+                />
+              )}
+
+              {freeLabels.free1 && (
+                <CheckItem
+                  label={freeLabels.free1}
+                  checked={free1Value}
+                  onToggle={() => setFree1Value(v => !v)}
+                  note={free1Note}
+                  onNote={setFree1Note}
+                />
+              )}
+
+              {freeLabels.free2 && (
+                <CheckItem
+                  label={freeLabels.free2}
+                  checked={free2Value}
+                  onToggle={() => setFree2Value(v => !v)}
+                  note={free2Note}
+                  onNote={setFree2Note}
+                />
+              )}
+
+              {freeLabels.free3 && (
+                <CheckItem
+                  label={freeLabels.free3}
+                  checked={free3Value}
+                  onToggle={() => setFree3Value(v => !v)}
+                  note={free3Note}
+                  onNote={setFree3Note}
+                />
+              )}
+
+            </div>
+          </div>
+        )}
+
+        {/* メモ */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <label className="text-sm font-bold text-gray-600 block mb-2">メモ</label>
           <textarea
@@ -243,6 +479,7 @@ function RecordPageInner() {
           />
         </div>
 
+        {/* 写真 */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <label className="text-sm font-bold text-gray-600 block mb-2">今日の写真</label>
           <label className="cursor-pointer block">
@@ -302,7 +539,7 @@ function RecordPageInner() {
           disabled={loading}
           className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-base disabled:opacity-50"
         >
-          {loading ? '送信中...' : '提出する'}
+          {loading ? '送信中...' : '記録する'}
         </button>
       </div>
 
