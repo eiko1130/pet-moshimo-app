@@ -63,13 +63,14 @@ export default function ContactsPage() {
 
   return (
     <div className="min-h-screen bg-[#FFFBFC] pb-24">
-      <header className="bg-[#FFB7C5] text-white flex items-center px-4 py-4 gap-3">
+      <header className="bg-[#FFB7C5] text-white flex items-center justify-between px-4 py-4">
         <button onClick={() => router.back()}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-6 h-6">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
         <span className="text-lg font-bold">緊急連絡先</span>
+        <div className="w-6" />
       </header>
 
       <p className="text-center text-xs text-gray-400 mt-4 mb-3 px-6">
