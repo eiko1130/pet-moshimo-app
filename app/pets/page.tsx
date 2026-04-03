@@ -137,6 +137,31 @@ export default function PetsPage() {
             </section>
           )}
 
+       {/* パートナー未設定の場合：招待促進バナー */}
+       {!partnerName && (
+            <section>
+              <div className="bg-pink-50 border border-pink-100 rounded-2xl px-5 py-5 flex flex-col items-center gap-3 text-center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-8 h-8">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  パートナーとアプリで繋がると、<br/>
+                  お互いのペット情報をこの画面で<br/>
+                  いつでも確認できます。
+                </p>
+                <Link
+                  href="/settings/contacts"
+                  className="bg-[#FFB7C5] text-white text-sm font-bold px-6 py-3 rounded-2xl"
+                >
+                  パートナーを招待する
+                </Link>
+              </div>
+            </section>
+          )}
+
         </div>
       )}
 
