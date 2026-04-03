@@ -28,6 +28,7 @@ export default function HomePage() {
   const [pets, setPets] = useState<Pet[]>([])
   const [randomImage, setRandomImage] = useState<string | null>(null)
   const [popupOpen, setPopupOpen] = useState(false)
+  const [partnerName, setPartnerName] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -86,6 +87,17 @@ export default function HomePage() {
           link.href = chosen
           document.head.appendChild(link)
         }
+      }
+
+      // パートナー情報取得
+      const { data: moshimoData } = await supabase
+        .from('moshimo_info')
+        .select('proxy_user_id, proxy_approved_at, proxy_name')
+        .eq('user_id', user.id)
+        .single()
+
+      if (moshimoData?.proxy_user_id && moshimoData?.proxy_approved_at) {
+        setPartnerName(moshimoData.proxy_name ?? 'パートナー')
       }
     }
 
@@ -231,23 +243,38 @@ export default function HomePage() {
         <Link href="/settings/owner" className="flex flex-col items-center gap-2">
           <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
             <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
             </svg>
           </div>
           <span className="text-xs text-gray-500 font-medium">飼い主情報</span>
         </Link>
 
-        <Link href="/settings/contacts" className="flex flex-col items-center gap-2">
-          <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-            </svg>
+        {partnerName ? (
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <span className="text-xs text-gray-500 font-medium">{partnerName}</span>
           </div>
-          <span className="text-xs text-gray-500 font-medium">緊急連絡先</span>
-        </Link>
+        ) : (
+          <Link href="/settings/contacts" className="flex flex-col items-center gap-2">
+            <div className="w-16 h-16 rounded-full bg-[#FFB7C5] border-2 border-[#FFB7C5] flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} className="w-7 h-7">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <span className="text-xs text-[#FFB7C5] font-bold">招待する</span>
+          </Link>
+        )}
       </div>
 
       {/* このアプリについて */}
@@ -265,7 +292,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* ポップアップ（中央モーダル） */}
+      {/* ポップアップ */}
       {popupOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-8"
@@ -275,38 +302,32 @@ export default function HomePage() {
             className="bg-white rounded-3xl w-full max-w-sm overflow-hidden"
             onClick={() => { setPopupOpen(false); router.push('/record') }}
           >
-            {/* 写真エリア */}
             <div className="flex justify-center pt-6 pb-2">
               <div className="relative w-44 h-44">
-                {/* 花・左上 */}
                 <svg viewBox="0 0 24 24" className="absolute -top-3 -left-1 w-8 h-8" fill="#FFB7C5">
                   <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
                   <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
                   <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
                   <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
                 </svg>
-                {/* 花・右上 */}
                 <svg viewBox="0 0 24 24" className="absolute -top-2 -right-2 w-7 h-7" fill="#FBBF24">
                   <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
                   <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
                   <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
                   <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
                 </svg>
-                {/* 花・左下 */}
                 <svg viewBox="0 0 24 24" className="absolute -bottom-2 -left-2 w-7 h-7" fill="#86EFAC">
                   <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
                   <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
                   <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
                   <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
                 </svg>
-                {/* 花・右下 */}
                 <svg viewBox="0 0 24 24" className="absolute -bottom-3 -right-1 w-8 h-8" fill="#FFB7C5">
                   <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
                   <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
                   <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
                   <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
                 </svg>
-                {/* キラキラ */}
                 <svg viewBox="0 0 10 10" className="absolute top-0 right-4 w-4 h-4" fill="none" stroke="#FFB7C5" strokeWidth={1.5}>
                   <line x1="5" y1="0" x2="5" y2="10"/><line x1="0" y1="5" x2="10" y2="5"/>
                   <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
@@ -315,11 +336,9 @@ export default function HomePage() {
                   <line x1="5" y1="0" x2="5" y2="10"/><line x1="0" y1="5" x2="10" y2="5"/>
                   <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
                 </svg>
-                {/* ドット */}
                 <div className="absolute top-2 left-0 w-2 h-2 rounded-full bg-[#86EFAC]"/>
                 <div className="absolute top-1 right-6 w-1.5 h-1.5 rounded-full bg-pink-300"/>
                 <div className="absolute bottom-1 right-3 w-2 h-2 rounded-full bg-yellow-300"/>
-                {/* 丸い写真 */}
                 <div className="w-44 h-44 rounded-full overflow-hidden border-4 border-white shadow-md">
                   {randomImage ? (
                     <img src={randomImage} alt="今日のうちの子" className="w-full h-full object-cover" />
@@ -333,17 +352,13 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-{/* テキストエリア */}
-<div className="px-5 pt-2 pb-6 flex flex-col items-center gap-3">
+            <div className="px-5 pt-2 pb-6 flex flex-col items-center gap-3">
               <p className="text-center text-base font-bold text-gray-700">今日も元気を確認しました！</p>
-              {/* リボン風ラベル */}
               <div className="relative flex items-center justify-center">
-                {/* 左の三角 */}
                 <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderRight: '12px solid #FFB7C5' }} />
                 <div className="bg-[#FFB7C5] px-4 py-1">
                   <span className="text-white text-xs font-medium">今日のうちの子：オキ家のおこめちゃん</span>
                 </div>
-                {/* 右の三角 */}
                 <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderLeft: '12px solid #FFB7C5' }} />
               </div>
             </div>
