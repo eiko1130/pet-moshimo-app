@@ -9,11 +9,138 @@ import type { Pet, PetRecord } from '@/types'
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 type Tab = 'timeline' | 'calendar' | 'gallery'
+type PartnerType = 'self' | 'partner' | 'friend'
+
+// ダミーデータ
+const DUMMY_RECORDS = [
+  {
+    id: 'dummy-1',
+    ownerName: 'エイコ',
+    ownerType: 'self' as PartnerType,
+    petName: 'しらす',
+    petAvatar: null,
+    date: '2026-04-07',
+    mood: 'good',
+    memo: '今日はひなたぼっこしながらうとうとしてた。かわいすぎる。',
+    imageUrl: null,
+    items: [],
+  },
+  {
+    id: 'dummy-2',
+    ownerName: '山田さん',
+    ownerType: 'partner' as PartnerType,
+    petName: 'まめ',
+    petAvatar: null,
+    date: '2026-04-07',
+    mood: 'good',
+    memo: '公園でお散歩！落ち葉をかさかさ踏むのが楽しそうだった。',
+    imageUrl: '/timelinedog1.jpeg',
+    items: ['体重 3.1kg'],
+  },
+  {
+    id: 'dummy-3',
+    ownerName: '鈴木さん',
+    ownerType: 'friend' as PartnerType,
+    petName: 'ぴより',
+    petAvatar: null,
+    date: '2026-04-06',
+    mood: 'normal',
+    memo: 'ケージの掃除をしたらご機嫌ナナメ。でもごはんはちゃんと食べた。',
+    imageUrl: '/timelinebird1.jpeg',
+    items: [],
+  },
+  {
+    id: 'dummy-4',
+    ownerName: 'エイコ',
+    ownerType: 'self' as PartnerType,
+    petName: 'おこめ',
+    petAvatar: null,
+    date: '2026-04-06',
+    mood: 'good',
+    memo: 'おやつをあげたら手から食べてくれた！成長した…！',
+    imageUrl: null,
+    items: ['爪切り'],
+  },
+  {
+    id: 'dummy-5',
+    ownerName: '山田さん',
+    ownerType: 'partner' as PartnerType,
+    petName: 'まめ',
+    petAvatar: null,
+    date: '2026-04-05',
+    mood: 'bad',
+    memo: '朝からご飯をあまり食べなかった。夕方には元気になったけど心配。',
+    imageUrl: '/timelinedog2.jpeg',
+    items: ['食欲なし'],
+  },
+  {
+    id: 'dummy-6',
+    ownerName: '鈴木さん',
+    ownerType: 'friend' as PartnerType,
+    petName: 'ぴより',
+    petAvatar: null,
+    date: '2026-04-05',
+    mood: 'good',
+    memo: '今日は歌いっぱなし。元気すぎる。',
+    imageUrl: '/timelinebird2.jpeg',
+    items: [],
+  },
+  {
+    id: 'dummy-7',
+    ownerName: 'エイコ',
+    ownerType: 'self' as PartnerType,
+    petName: 'しらす',
+    petAvatar: null,
+    date: '2026-04-04',
+    mood: 'normal',
+    memo: '少し鼻水が出てたので様子見。',
+    imageUrl: null,
+    items: ['体温 38.2℃'],
+  },
+  {
+    id: 'dummy-8',
+    ownerName: '山田さん',
+    ownerType: 'partner' as PartnerType,
+    petName: 'まめ',
+    petAvatar: null,
+    date: '2026-04-04',
+    mood: 'good',
+    memo: 'ドッグランデビュー！他のわんちゃんとも仲良くできた。',
+    imageUrl: null,
+    items: [],
+  },
+  {
+    id: 'dummy-9',
+    ownerName: 'エイコ',
+    ownerType: 'self' as PartnerType,
+    petName: 'おこめ',
+    petAvatar: null,
+    date: '2026-04-03',
+    mood: 'good',
+    memo: 'お気に入りのおもちゃで遊んでいた。',
+    imageUrl: null,
+    items: [],
+  },
+  {
+    id: 'dummy-10',
+    ownerName: '鈴木さん',
+    ownerType: 'friend' as PartnerType,
+    petName: 'ぴより',
+    petAvatar: null,
+    date: '2026-04-03',
+    mood: 'normal',
+    memo: '換羽期かも。羽根がよく落ちてる。',
+    imageUrl: null,
+    items: [],
+  },
+]
+
+const PAGE_SIZE = 5
 
 const moodLabel = (mood: string | null) => {
-  if (mood === 'good') return '元気いっぱい'
+  if (mood === 'good') return '良い'
   if (mood === 'normal') return '普通'
-  if (mood === 'bad') return '体調注意'
+  if (mood === 'bad') return '悪い'
   return ''
 }
 
@@ -50,39 +177,30 @@ const MoodIcon = ({ mood }: { mood: string | null }) => {
   return null
 }
 
-// 記録項目のサマリーを組み立てる
-const buildItemSummary = (
-  record: PetRecord,
-  weightUnit: string,
-  freeLabels: { free1: string; free2: string; free3: string }
-): string[] => {
-  const items: string[] = []
-  if (record.weight) items.push(`体重 ${record.weight}${weightUnit}`)
-  if (record.temperature) items.push(`体温 ${record.temperature}℃`)
-  if (record.no_appetite) items.push('食欲なし')
-  if (record.abnormal_excretion) items.push('排泄異常')
-  if (record.vomit) items.push('嘔吐')
-  if (record.nail_trimming) items.push('爪切り')
-  if (record.free_item1_value && freeLabels.free1) items.push(freeLabels.free1)
-  if (record.free_item2_value && freeLabels.free2) items.push(freeLabels.free2)
-  if (record.free_item3_value && freeLabels.free3) items.push(freeLabels.free3)
-  return items
+// パートナータイプのバッジ
+const PartnerBadge = ({ type }: { type: PartnerType }) => {
+  if (type === 'partner') return (
+    <span className="flex items-center gap-0.5 text-xs bg-blue-50 text-blue-400 px-1.5 py-0.5 rounded-full">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3 h-3">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      代理人
+    </span>
+  )
+  if (type === 'friend') return (
+    <span className="flex items-center gap-0.5 text-xs bg-pink-50 text-pink-400 px-1.5 py-0.5 rounded-full">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3 h-3">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+      友達
+    </span>
+  )
+  return null
 }
 
-// タイムラインカード
-const TimelineCard = ({
-  record, pet, weightUnit, freeLabels, onClick
-}: {
-  record: PetRecord
-  pet: Pet | undefined
-  weightUnit: string
-  freeLabels: { free1: string; free2: string; free3: string }
-  onClick: () => void
-}) => {
+// タイムラインカード（ダミー用）
+const DummyTimelineCard = ({ record }: { record: typeof DUMMY_RECORDS[0] }) => {
   const [expanded, setExpanded] = useState(false)
-  const photoUrl = record.image_url
-  const avatarUrl = pet?.image_url ?? null
-  const itemSummary = buildItemSummary(record, weightUnit, freeLabels)
   const MEMO_LIMIT = 60
   const isLong = (record.memo ?? '').length > MEMO_LIMIT
 
@@ -91,37 +209,31 @@ const TimelineCard = ({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-      {/* 写真（あれば全幅で大きく） */}
-      {photoUrl && (
-        <button onClick={onClick} className="block w-full">
-          <div className="relative w-full aspect-square">
-            <Image
-              src={photoUrl}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 512px"
-            />
-          </div>
-        </button>
+      {record.imageUrl && (
+        <div className="relative w-full aspect-square">
+          <Image
+            src={record.imageUrl}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 512px"
+          />
+        </div>
       )}
-
-      {/* カード本文 */}
       <div className="p-4">
-        {/* ヘッダー：アバター・名前・日付・ごきげん */}
+        {/* ヘッダー */}
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 rounded-full overflow-hidden bg-pink-50 shrink-0">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-sm">🐱</div>
-            )}
+          <div className="w-8 h-8 rounded-full bg-pink-50 shrink-0 flex items-center justify-center text-sm">
+            {record.ownerType === 'self' ? '🐱' : record.ownerType === 'partner' ? '🐕' : '🐦'}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-bold text-gray-700 text-sm">{pet?.name ?? '不明'}</span>
-              <span className="text-xs text-gray-400">{dateLabel}</span>
+              <span className="font-bold text-gray-700 text-sm">{record.ownerName}</span>
+              <span className="text-xs text-gray-400">の</span>
+              <span className="font-bold text-gray-700 text-sm">{record.petName}</span>
+              <PartnerBadge type={record.ownerType} />
             </div>
+            <span className="text-xs text-gray-400">{dateLabel}</span>
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <MoodIcon mood={record.mood} />
@@ -131,14 +243,11 @@ const TimelineCard = ({
           </div>
         </div>
 
-        {/* 記録項目サマリー */}
-        {itemSummary.length > 0 && (
+        {/* 記録項目 */}
+        {record.items.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-3">
-            {itemSummary.map((item, i) => (
-              <span
-                key={i}
-                className="text-xs bg-pink-50 text-[#FFB7C5] px-2 py-0.5 rounded-full"
-              >
+            {record.items.map((item, i) => (
+              <span key={i} className="text-xs bg-pink-50 text-[#FFB7C5] px-2 py-0.5 rounded-full">
                 {item}
               </span>
             ))}
@@ -152,10 +261,93 @@ const TimelineCard = ({
               {expanded || !isLong ? record.memo : record.memo.slice(0, MEMO_LIMIT) + '…'}
             </p>
             {isLong && (
-              <button
-                onClick={() => setExpanded(v => !v)}
-                className="text-xs text-[#FFB7C5] mt-1"
-              >
+              <button onClick={() => setExpanded(v => !v)} className="text-xs text-[#FFB7C5] mt-1">
+                {expanded ? '閉じる' : '続きを見る'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// 実際のDBカード（自分のデータ用）
+const TimelineCard = ({
+  record, pet, weightUnit, freeLabels, onClick
+}: {
+  record: PetRecord
+  pet: Pet | undefined
+  weightUnit: string
+  freeLabels: { free1: string; free2: string; free3: string }
+  onClick: () => void
+}) => {
+  const [expanded, setExpanded] = useState(false)
+  const photoUrl = record.image_url
+  const avatarUrl = pet?.image_url ?? null
+  const MEMO_LIMIT = 60
+  const isLong = (record.memo ?? '').length > MEMO_LIMIT
+
+  const d = new Date(record.date + 'T00:00:00')
+  const dateLabel = `${d.getMonth() + 1}月${d.getDate()}日（${WEEKDAYS[d.getDay()]}）`
+
+  const items: string[] = []
+  if (record.weight) items.push(`体重 ${record.weight}${weightUnit}`)
+  if (record.temperature) items.push(`体温 ${record.temperature}℃`)
+  if (record.no_appetite) items.push('食欲なし')
+  if (record.abnormal_excretion) items.push('排泄異常')
+  if (record.vomit) items.push('嘔吐')
+  if (record.nail_trimming) items.push('爪切り')
+  if (record.free_item1_value && freeLabels.free1) items.push(freeLabels.free1)
+  if (record.free_item2_value && freeLabels.free2) items.push(freeLabels.free2)
+  if (record.free_item3_value && freeLabels.free3) items.push(freeLabels.free3)
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      {photoUrl && (
+        <button onClick={onClick} className="block w-full">
+          <div className="relative w-full aspect-square">
+            <Image src={photoUrl} alt="" fill className="object-cover" sizes="(max-width: 768px) 100vw, 512px" />
+          </div>
+        </button>
+      )}
+      <div className="p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-pink-50 shrink-0">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm">🐱</div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs text-gray-400">エイコの</span>
+              <span className="font-bold text-gray-700 text-sm">{pet?.name ?? '不明'}</span>
+            </div>
+            <span className="text-xs text-gray-400">{dateLabel}</span>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <MoodIcon mood={record.mood} />
+            <span className={`text-xs font-medium ${moodColor(record.mood)}`}>
+              {moodLabel(record.mood)}
+            </span>
+          </div>
+        </div>
+        {items.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {items.map((item, i) => (
+              <span key={i} className="text-xs bg-pink-50 text-[#FFB7C5] px-2 py-0.5 rounded-full">{item}</span>
+            ))}
+          </div>
+        )}
+        {record.memo && (
+          <div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {expanded || !isLong ? record.memo : record.memo.slice(0, MEMO_LIMIT) + '…'}
+            </p>
+            {isLong && (
+              <button onClick={() => setExpanded(v => !v)} className="text-xs text-[#FFB7C5] mt-1">
                 {expanded ? '閉じる' : '続きを見る'}
               </button>
             )}
@@ -175,6 +367,7 @@ export default function TimelinePage() {
   const [loading, setLoading] = useState(true)
   const [weightUnit, setWeightUnit] = useState('kg')
   const [freeLabels, setFreeLabels] = useState({ free1: '', free2: '', free3: '' })
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   // カレンダー用
   const [year, setYear] = useState(new Date().getFullYear())
@@ -292,6 +485,9 @@ export default function TimelinePage() {
   const prevPhoto = currentIndex > 0 ? flatPhotos[currentIndex - 1] : null
   const nextPhoto = currentIndex < flatPhotos.length - 1 ? flatPhotos[currentIndex + 1] : null
 
+  const visibleDummy = DUMMY_RECORDS.slice(0, visibleCount)
+  const hasMore = visibleCount < DUMMY_RECORDS.length
+
   return (
     <div className="min-h-screen bg-[#FFFBFC] pb-24">
       <header className="bg-[#FFB7C5] text-white text-center py-4 text-lg font-bold">
@@ -320,31 +516,16 @@ export default function TimelinePage() {
       {/* ─── タイムライン ─── */}
       {tab === 'timeline' && (
         <div className="px-4 py-4 space-y-4">
-          {loading ? (
-            <div className="flex justify-center mt-10">
-              <div className="w-8 h-8 border-2 border-[#FFB7C5] border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : records.length === 0 ? (
-            <div className="flex flex-col items-center justify-center mt-20 gap-3 text-gray-400">
-              <p className="text-sm text-center">まだ記録がありません。<br/>毎日の記録をつけてみましょう。</p>
-              <button
-                onClick={() => router.push('/record')}
-                className="bg-[#FFB7C5] text-white px-5 py-3 rounded-2xl text-sm font-bold"
-              >
-                最初の記録をつける
-              </button>
-            </div>
-          ) : (
-            records.map(record => (
-              <TimelineCard
-                key={record.id}
-                record={record}
-                pet={getPet(record.pet_id)}
-                weightUnit={weightUnit}
-                freeLabels={freeLabels}
-                onClick={() => router.push(`/calendar/${record.id}`)}
-              />
-            ))
+          {visibleDummy.map(record => (
+            <DummyTimelineCard key={record.id} record={record} />
+          ))}
+          {hasMore && (
+            <button
+              onClick={() => setVisibleCount(v => v + PAGE_SIZE)}
+              className="w-full py-3 text-sm text-[#FFB7C5] border border-pink-200 rounded-2xl font-medium"
+            >
+              もっと見る
+            </button>
           )}
         </div>
       )}
@@ -453,7 +634,10 @@ export default function TimelinePage() {
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-bold text-gray-700 text-sm">{pet?.name ?? '不明'}</span>
-                            <span className={`text-xs ${moodColor(record.mood)}`}>{moodLabel(record.mood)}</span>
+                            <div className="flex items-center gap-1">
+                              <MoodIcon mood={record.mood} />
+                              <span className={`text-xs ${moodColor(record.mood)}`}>{moodLabel(record.mood)}</span>
+                            </div>
                           </div>
                           {record.memo && (
                             <p className="text-xs text-gray-500 line-clamp-2">{record.memo}</p>
