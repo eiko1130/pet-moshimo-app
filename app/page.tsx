@@ -210,39 +210,44 @@ export default function HomePage() {
           onClick={handleCheckIn}
           className="relative w-full bg-[#FFB7C5] rounded-3xl py-6 flex flex-col items-center gap-3 shadow-md active:scale-95 transition-transform"
         >
-          {/* ペットアイコン横並び */}
-          <div className="flex gap-3 justify-center">
+          {/* 吹き出し */}
+          <div className="relative flex justify-center mb-1">
+            <div className="bg-white rounded-2xl px-5 py-2 shadow-sm relative">
+              <span className="text-[#FFB7C5] text-base font-bold">今日もそばにいるよ</span>
+              {/* 吹き出しの三角 */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0"
+                style={{ borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: '10px solid white' }}
+              />
+            </div>
+          </div>
+
+          {/* ペットアイコン横並び（名前なし） */}
+          <div className="flex gap-3 justify-center mt-2">
             {pets.length === 0 ? (
               <div className="w-14 h-14 rounded-full bg-white/40 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={1.5} className="w-7 h-7">
+                <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
               </div>
             ) : (
               pets.map(pet => (
-                <div key={pet.id} className="flex flex-col items-center gap-1">
-                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/60 bg-white/30">
-                    {pet.image_url ? (
-                      <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={1.5} className="w-7 h-7">
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-white text-xs font-medium">{pet.name}</span>
+                <div key={pet.id} className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/60 bg-white/30">
+                  {pet.image_url ? (
+                    <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      </svg>
+                    </div>
+                  )}
                 </div>
               ))
             )}
           </div>
 
-          {/* テキスト */}
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-white text-lg font-bold">今日もそばにいるよ</span>
-            <span className="text-white/80 text-xs">タップして今日の記録を残す</span>
-          </div>
+          {/* サブテキスト */}
+          <span className="text-white/80 text-xs mt-2">タップして今日の記録を残す</span>
 
           {/* 指先アニメーション */}
           <div
