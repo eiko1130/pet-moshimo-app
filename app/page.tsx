@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -21,6 +21,8 @@ const toLocalDateString = () => {
   return `${y}-${m}-${d}`
 }
 
+const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
+
 export default function HomePage() {
   const { user } = useAuth()
   const router = useRouter()
@@ -29,6 +31,16 @@ export default function HomePage() {
   const [randomImage, setRandomImage] = useState<string | null>(null)
   const [popupOpen, setPopupOpen] = useState(false)
   const [partnerName, setPartnerName] = useState<string | null>(null)
+
+  // スワイプ用
+  const [swiping, setSwiping] = useState(false)
+  const [swipeY, setSwipeY] = useState(0)
+  const [peeled, setPeeled] = useState(false)
+  const startYRef = useRef<number | null>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  const today = new Date()
+  const dateLabel = `${today.getMonth() + 1}月${today.getDate()}日（${WEEKDAYS[today.getDay()]}）`
 
   useEffect(() => {
     if (!user) return
@@ -42,28 +54,18 @@ export default function HomePage() {
 
       const petList = petsData ?? []
       setPets(petList)
-      petList.forEach(pet => {
-        if (pet.image_url) {
-          const link = document.createElement('link')
-          link.rel = 'preload'
-          link.as = 'image'
-          link.href = pet.image_url
-          document.head.appendChild(link)
-        }
-      })
 
-      const today = toLocalDateString()
+      const todayStr = toLocalDateString()
       const { data: recordsData } = await supabase
         .from('pet_records')
         .select('pet_id, image_url')
         .eq('user_id', user.id)
-        .eq('date', today)
+        .eq('date', todayStr)
 
       const records = recordsData ?? []
       const images = records.map(r => r.image_url).filter(Boolean) as string[]
       if (images.length > 0) {
-        const chosen = images[Math.floor(Math.random() * images.length)]
-        setRandomImage(chosen)
+        setRandomImage(images[Math.floor(Math.random() * images.length)])
       } else {
         const { data: pastRecords } = await supabase
           .from('pet_records')
@@ -102,13 +104,82 @@ export default function HomePage() {
     setPopupOpen(true)
   }
 
+  // タッチ開始
+  const onTouchStart = (e: React.TouchEvent) => {
+    startYRef.current = e.touches[0].clientY
+    setSwiping(true)
+  }
+
+  // タッチ移動
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (startYRef.current === null) return
+    const diff = e.touches[0].clientY - startYRef.current
+    if (diff > 0) setSwipeY(Math.min(diff, 200))
+  }
+
+  // タッチ終了
+  const onTouchEnd = () => {
+    if (swipeY > 80) {
+      // 十分スワイプしたらめくる
+      setPeeled(true)
+      setTimeout(() => {
+        handleCheckIn()
+        setTimeout(() => {
+          setPeeled(false)
+          setSwipeY(0)
+        }, 500)
+      }, 300)
+    } else {
+      setSwipeY(0)
+    }
+    setSwiping(false)
+    startYRef.current = null
+  }
+
+  // マウス操作（PC用）
+  const onMouseDown = (e: React.MouseEvent) => {
+    startYRef.current = e.clientY
+    setSwiping(true)
+  }
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!swiping || startYRef.current === null) return
+    const diff = e.clientY - startYRef.current
+    if (diff > 0) setSwipeY(Math.min(diff, 200))
+  }
+
+  const onMouseUp = () => {
+    if (swipeY > 80) {
+      setPeeled(true)
+      setTimeout(() => {
+        handleCheckIn()
+        setTimeout(() => {
+          setPeeled(false)
+          setSwipeY(0)
+        }, 500)
+      }, 300)
+    } else {
+      setSwipeY(0)
+    }
+    setSwiping(false)
+    startYRef.current = null
+  }
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     window.location.href = '/auth'
   }
 
+  const cardStyle = {
+    transform: peeled
+      ? 'translateY(100%) rotate(3deg)'
+      : `translateY(${swipeY}px) rotate(${swipeY * 0.02}deg)`,
+    transition: peeled ? 'transform 0.3s ease-in' : swiping ? 'none' : 'transform 0.3s ease-out',
+    cursor: 'grab',
+  }
+
   return (
-    <div className="min-h-screen bg-[#FFFBFC] pb-24">
+    <div className="min-h-screen bg-[#FFFBFC] pb-24" onMouseMove={onMouseMove} onMouseUp={onMouseUp}>
       {/* ヘッダー */}
       <header className="flex items-center justify-between px-5 pt-5 pb-2">
         <button onClick={() => setMenuOpen(!menuOpen)} className="text-gray-400">
@@ -185,83 +256,83 @@ export default function HomePage() {
       )}
 
       {/* ロゴ */}
-      <div className="flex justify-center pt-2 pb-2">
+      <div className="flex justify-center pt-2 pb-4">
         <Image src="/logo.webp" alt="うちの子バトン" width={200} height={67} className="object-contain" priority />
       </div>
 
-      {/* メインイラスト（飾り） */}
-      <div className="px-10 mb-4">
-        <div className="relative w-full rounded-3xl overflow-hidden">
-          <div className="relative w-full aspect-square">
-            <Image
-              src="/main.webp"
-              alt=""
-              fill
-              className="object-cover"
-              priority
-            />
+      {/* 日めくりカレンダー風カード */}
+      <div className="px-6 mb-5 overflow-hidden">
+        {/* 背面（めくれた後に見える） */}
+        <div className="bg-pink-100 rounded-3xl mx-2 h-8 -mb-4" />
+        <div className="bg-pink-200 rounded-3xl mx-4 h-8 -mb-4" />
+
+        {/* メインカード */}
+        <div
+          ref={cardRef}
+          style={cardStyle}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          onMouseDown={onMouseDown}
+          className="bg-white rounded-3xl shadow-lg border border-pink-100 overflow-hidden select-none"
+        >
+          {/* カレンダー上部（日付バー） */}
+          <div className="bg-[#FFB7C5] px-5 py-3 flex items-center justify-between">
+            <div className="flex gap-1">
+              {['月', '火', '水', '木', '金', '土', '日'].map((d, i) => (
+                <div key={d} className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                  d === WEEKDAYS[today.getDay()] ? 'bg-white text-[#FFB7C5]' : 'text-white/60'
+                }`}>{d}</div>
+              ))}
+            </div>
+          </div>
+
+          {/* カード本文 */}
+          <div className="px-6 py-5 flex flex-col items-center gap-4">
+            {/* 日付 */}
+            <p className="text-2xl font-bold text-gray-700">{dateLabel}</p>
+
+            {/* ペット写真 */}
+            <div className="flex gap-4 justify-center">
+              {pets.length === 0 ? (
+                <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-8 h-8">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                </div>
+              ) : (
+                pets.map(pet => (
+                  <div key={pet.id} className="w-16 h-16 rounded-full overflow-hidden border-2 border-pink-100 shadow-sm">
+                    {pet.image_url ? (
+                      <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-pink-50 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-8 h-8">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* テキスト */}
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-base font-bold text-gray-700">今日もそばにいるよ</p>
+              <div className="flex items-center gap-1 text-gray-400">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                  <polyline points="7 13 12 18 17 13"/>
+                  <polyline points="7 6 12 11 17 6"/>
+                </svg>
+                <span className="text-xs">下にスワイプして記録する</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* チェックインボタン */}
-      <div className="px-6 mb-5">
-        <button
-          onClick={handleCheckIn}
-          className="relative w-full bg-[#FFB7C5] rounded-3xl py-6 flex flex-col items-center gap-3 shadow-md active:scale-95 transition-transform"
-        >
-          {/* 吹き出し */}
-          <div className="relative flex justify-center mb-1">
-            <div className="bg-white rounded-2xl px-5 py-2 shadow-sm relative">
-              <span className="text-[#FFB7C5] text-base font-bold">今日もそばにいるよ</span>
-              {/* 吹き出しの三角 */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0"
-                style={{ borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: '10px solid white' }}
-              />
-            </div>
-          </div>
-
-          {/* ペットアイコン横並び（名前なし） */}
-          <div className="flex gap-3 justify-center mt-2">
-            {pets.length === 0 ? (
-              <div className="w-14 h-14 rounded-full bg-white/40 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
-              </div>
-            ) : (
-              pets.map(pet => (
-                <div key={pet.id} className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/60 bg-white/30">
-                  {pet.image_url ? (
-                    <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                      </svg>
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* サブテキスト */}
-          <span className="text-white/80 text-xs mt-2">タップして今日の記録を残す</span>
-
-          {/* 指先アニメーション */}
-          <div
-            className="absolute bottom-3 right-5"
-            style={{ animation: 'bounce-finger 1.5s ease-in-out infinite' }}
-          >
-            <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7 opacity-80">
-              <path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/>
-            </svg>
-          </div>
-        </button>
-      </div>
-
-      {/* パートナー招待バナー（未設定の場合のみ） */}
+      {/* パートナー招待バナー */}
       {!partnerName && (
         <div className="mx-6 bg-white border border-pink-100 rounded-2xl p-4">
           <p className="text-sm font-bold text-gray-700 mb-2">代理人とアプリで繋がろう</p>
@@ -362,14 +433,6 @@ export default function HomePage() {
           </div>
         </div>
       )}
-
-      {/* アニメーション定義 */}
-      <style jsx>{`
-        @keyframes bounce-finger {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
-        }
-      `}</style>
 
       <BottomNav />
     </div>
