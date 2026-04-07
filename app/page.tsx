@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/AuthProvider'
@@ -42,15 +42,6 @@ export default function HomePage() {
 
       const petList = petsData ?? []
       setPets(petList)
-      petList.forEach(pet => {
-        if (pet.image_url) {
-          const link = document.createElement('link')
-          link.rel = 'preload'
-          link.as = 'image'
-          link.href = pet.image_url
-          document.head.appendChild(link)
-        }
-      })
 
       const today = toLocalDateString()
       const { data: recordsData } = await supabase
@@ -62,13 +53,7 @@ export default function HomePage() {
       const records = recordsData ?? []
       const images = records.map(r => r.image_url).filter(Boolean) as string[]
       if (images.length > 0) {
-        const chosen = images[Math.floor(Math.random() * images.length)]
-        setRandomImage(chosen)
-        const link = document.createElement('link')
-        link.rel = 'preload'
-        link.as = 'image'
-        link.href = chosen
-        document.head.appendChild(link)
+        setRandomImage(images[Math.floor(Math.random() * images.length)])
       } else {
         const { data: pastRecords } = await supabase
           .from('pet_records')
@@ -79,17 +64,10 @@ export default function HomePage() {
           .limit(20)
         const pastImages = (pastRecords ?? []).map(r => r.image_url).filter(Boolean) as string[]
         if (pastImages.length > 0) {
-          const chosen = pastImages[Math.floor(Math.random() * pastImages.length)]
-          setRandomImage(chosen)
-          const link = document.createElement('link')
-          link.rel = 'preload'
-          link.as = 'image'
-          link.href = chosen
-          document.head.appendChild(link)
+          setRandomImage(pastImages[Math.floor(Math.random() * pastImages.length)])
         }
       }
 
-      // パートナー情報取得
       const { data: moshimoData } = await supabase
         .from('moshimo_info')
         .select('proxy_user_id, proxy_approved_at, proxy_name')
@@ -121,7 +99,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#FFFBFC] pb-24">
-      {/* ヘッダー */}
+      {/* ハンバーガーメニュー */}
       <header className="flex items-center justify-between px-5 pt-5 pb-2">
         <button onClick={() => setMenuOpen(!menuOpen)} className="text-gray-400">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
@@ -197,100 +175,80 @@ export default function HomePage() {
       )}
 
       {/* ロゴ */}
-      <div className="flex justify-center pt-4 pb-2">
-        <Image src="/logo.webp" alt="もしも手帳" width={240} height={80} className="object-contain" priority />
+      <div className="flex justify-center pt-2 pb-4">
+        <Image src="/logo.webp" alt="うちの子バトン" width={200} height={67} className="object-contain" priority />
       </div>
 
-      {/* メイン画像ボタン */}
-      <div className="px-10">
+      {/* メインイラスト */}
+      <div className="px-8 mb-6">
+        <div className="relative w-full aspect-square rounded-3xl overflow-hidden">
+          <Image
+            src="/main.webp"
+            alt=""
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+      </div>
+
+      {/* チェックインボタン */}
+      <div className="px-8 mb-6">
         <button
           onClick={handleCheckIn}
-          className="relative w-full rounded-3xl overflow-hidden"
+          className="w-full bg-white border-2 border-[#FFB7C5] rounded-3xl py-5 px-6 flex flex-col items-center gap-3"
         >
-          <div className="relative w-full aspect-square">
-            <Image
-              src="/main.webp"
-              alt="今日も元気！"
-              fill
-              className="object-cover"
-              priority
-            />
+          {/* ペット写真横並び */}
+          <div className="flex items-center justify-center gap-3">
+            {pets.length === 0 ? (
+              <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-8 h-8">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </div>
+            ) : (
+              pets.map(pet => (
+                <div key={pet.id} className="flex flex-col items-center gap-1">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-pink-100 bg-pink-50">
+                    {pet.image_url ? (
+                      <img src={pet.image_url} alt={pet.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-8 h-8">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-500">{pet.name}</span>
+                </div>
+              ))
+            )}
           </div>
-          <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-end pb-4 gap-0.5"
-            style={{ height: '80px', background: 'linear-gradient(to top, rgba(255,183,197,1) 0%, rgba(255,183,197,0.8) 50%, rgba(255,183,197,0) 100%)' }}>
-            <div className="flex items-center gap-1.5">
-              <svg viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth={1.5} className="w-4 h-4">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-              <span className="text-sm font-bold text-white drop-shadow">今日も元気！</span>
-            </div>
-            <span className="text-white/80 text-xs">タップして今日の元気を記録</span>
+          <div className="text-center">
+            <p className="text-base font-bold text-[#FFB7C5]">今日もそばにいるよ</p>
+            <p className="text-xs text-gray-400 mt-0.5">タップして今日の記録を残す</p>
           </div>
         </button>
       </div>
 
-      {/* ショートカット */}
-      <div className="flex justify-around px-10 pt-5">
-        <Link href="/pets" className="flex flex-col items-center gap-2">
-          <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-            </svg>
+      {/* パートナー招待バナー（未設定の場合のみ） */}
+      {!partnerName && (
+        <div className="px-8 mb-6">
+          <div className="bg-pink-50 border border-pink-100 rounded-2xl px-5 py-5">
+            <p className="text-sm font-bold text-gray-700 mb-2">代理人とアプリで繋がろう</p>
+            <p className="text-xs text-gray-500 leading-relaxed mb-4">
+              もしもの時には代理人にメールが届きますが、相手もアプリをインストールしている場合はメール＋アプリ通知でWの安心。ペット日記を見せ合えたり、より詳細な引き継ぎデータをわかりやすく閲覧できます。
+            </p>
+            <Link
+              href="/settings/contacts"
+              className="block w-full bg-[#FFB7C5] text-white text-sm font-bold py-3 rounded-2xl text-center"
+            >
+              パートナーを招待する
+            </Link>
           </div>
-          <span className="text-xs text-gray-500 font-medium">ペット情報</span>
-        </Link>
-
-        <Link href="/settings/owner" className="flex flex-col items-center gap-2">
-          <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-          </div>
-          <span className="text-xs text-gray-500 font-medium">飼い主情報</span>
-        </Link>
-
-        {partnerName ? (
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-16 h-16 rounded-full bg-pink-50 border-2 border-pink-100 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-7 h-7">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <span className="text-xs text-gray-500 font-medium">{partnerName}</span>
-          </div>
-        ) : (
-          <Link href="/settings/contacts" className="flex flex-col items-center gap-2">
-            <div className="w-16 h-16 rounded-full bg-[#FFB7C5] border-2 border-[#FFB7C5] flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} className="w-7 h-7">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <span className="text-xs text-[#FFB7C5] font-bold">招待する</span>
-          </Link>
-        )}
-      </div>
-
-      {/* このアプリについて */}
-      <div className="mx-10 mt-6 bg-white border border-pink-50 rounded-2xl p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-4 h-4">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <span className="text-sm font-bold text-gray-500">このアプリについて</span>
         </div>
-        <p className="text-xs text-gray-400 leading-relaxed">
-          飼い主に万が一のことがあった際、登録した代理人へペットの情報が共有される仕組みです。毎日の記録が、大切なペットを守ります。
-        </p>
-      </div>
+      )}
 
       {/* ポップアップ */}
       {popupOpen && (
@@ -300,7 +258,7 @@ export default function HomePage() {
         >
           <div
             className="bg-white rounded-3xl w-full max-w-sm overflow-hidden"
-            onClick={() => { setPopupOpen(false); router.push('/record') }}
+            onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-center pt-6 pb-2">
               <div className="relative w-44 h-44">
@@ -353,14 +311,26 @@ export default function HomePage() {
               </div>
             </div>
             <div className="px-5 pt-2 pb-6 flex flex-col items-center gap-3">
-              <p className="text-center text-base font-bold text-gray-700">今日も元気を確認しました！</p>
+              <p className="text-center text-base font-bold text-gray-700">今日もそばにいるよ、記録しました！</p>
               <div className="relative flex items-center justify-center">
                 <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderRight: '12px solid #FFB7C5' }} />
                 <div className="bg-[#FFB7C5] px-4 py-1">
-                  <span className="text-white text-xs font-medium">今日のうちの子：オキ家のおこめちゃん</span>
+                  <span className="text-white text-xs font-medium">今日のうちの子</span>
                 </div>
                 <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderLeft: '12px solid #FFB7C5' }} />
               </div>
+              <button
+                onClick={() => { setPopupOpen(false); router.push('/record') }}
+                className="text-xs text-[#FFB7C5] border border-pink-200 rounded-full px-5 py-2 mt-1"
+              >
+                ペットの記録もつける
+              </button>
+              <button
+                onClick={() => setPopupOpen(false)}
+                className="text-xs text-gray-400"
+              >
+                閉じる
+              </button>
             </div>
           </div>
         </div>
