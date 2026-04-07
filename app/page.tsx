@@ -47,12 +47,6 @@ export default function HomePage() {
   useEffect(() => {
     if (!user) return
     const fetchData = async () => {
-      const { data: petsData } = await supabase
-        .from('my_pets')
-        .select('id, name, image_url')
-        .eq('user_id', user.id)
-        .order('created_at')
-
       const todayStr = toLocalDateString()
       const { data: recordsData } = await supabase
         .from('pet_records')
@@ -71,9 +65,7 @@ export default function HomePage() {
           .order('created_at', { ascending: false })
           .limit(20)
         const pastImages = (pastRecords ?? []).map((r: any) => r.image_url).filter(Boolean) as string[]
-        if (pastImages.length > 0) {
-          setRandomImage(pastImages[Math.floor(Math.random() * pastImages.length)])
-        }
+        if (pastImages.length > 0) setRandomImage(pastImages[Math.floor(Math.random() * pastImages.length)])
       }
 
       const { data: moshimoData } = await supabase
@@ -90,8 +82,7 @@ export default function HomePage() {
 
   const triggerCheckin = async () => {
     if (user) {
-      await supabase
-        .from('moshimo_info')
+      await supabase.from('moshimo_info')
         .update({ last_checked_at: new Date().toISOString() })
         .eq('user_id', user.id)
     }
@@ -101,11 +92,7 @@ export default function HomePage() {
     if (swipeY > 80) {
       setPeeled(true)
       triggerCheckin()
-      setTimeout(() => {
-        setDone(true)
-        setPeeled(false)
-        setSwipeY(0)
-      }, 400)
+      setTimeout(() => { setDone(true); setPeeled(false); setSwipeY(0) }, 400)
     } else {
       setSwipeY(0)
     }
@@ -140,9 +127,10 @@ export default function HomePage() {
     ? 'transform 0.4s ease-in'
     : swiping ? 'none' : 'transform 0.3s ease-out'
 
-  // 尖った下辺のクリップパス
-  const pointedBottom = {
-    clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 16px), 50% 100%, 0 calc(100% - 16px))'
+  // 紙の形（下が尖る）
+  const paperStyle: React.CSSProperties = {
+    clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 20px), 50% 100%, 0 calc(100% - 20px))',
+    backgroundColor: '#FFFEF9',
   }
 
   return (
@@ -215,9 +203,9 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ヘッダー */}
-      <header className="flex items-center justify-between px-5 pt-5 pb-2">
-        <button onClick={() => setMenuOpen(!menuOpen)} className="text-white">
+      {/* ヘッダー（ロゴ） */}
+      <header className="flex items-center justify-between px-5 pt-5 pb-3">
+        <button onClick={() => setMenuOpen(!menuOpen)} className="text-white opacity-70">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
             <line x1="3" y1="6" x2="21" y2="6"/>
             <line x1="3" y1="12" x2="21" y2="12"/>
@@ -228,194 +216,192 @@ export default function HomePage() {
         <div className="w-6" />
       </header>
 
-      {/* 木枠（固定・動かない） */}
-      <div className="px-6 pt-2">
+      {/* カレンダー本体 */}
+      <div className="px-5">
+
+        {/* 木枠（固定・動かない） */}
         <div
-          className="relative rounded-t-2xl flex items-center justify-center py-3"
-          style={{ backgroundColor: '#C8A96E' }}
+          className="relative rounded-t-2xl shadow-lg"
+          style={{ backgroundColor: '#C8A96E', paddingBottom: '6px' }}
         >
-          {/* Ω型の穴 */}
-          <div className="flex flex-col items-center">
-            <div
-              className="w-8 h-4 rounded-t-full border-2"
-              style={{ borderColor: '#A0845C', borderBottom: 'none', backgroundColor: '#F5C842' }}
-            />
-            <div className="w-10 h-1" style={{ backgroundColor: '#A0845C' }} />
-          </div>
-        </div>
-      </div>
-
-      {/* カードエリア */}
-      <div className="px-6 relative" style={{ minHeight: '500px' }}>
-
-        {/* 後ろのページ2・3枚（尖った形） */}
-        <div
-          className="absolute"
-          style={{
-            ...pointedBottom,
-            backgroundColor: '#e8e0d5',
-            inset: '6px 20px 0',
-            zIndex: 0,
-          }}
-        />
-        <div
-          className="absolute"
-          style={{
-            ...pointedBottom,
-            backgroundColor: '#f0ece6',
-            inset: '3px 12px 0',
-            zIndex: 1,
-          }}
-        />
-
-        {/* めくった後のページ */}
-        {done && (
-          <div
-            className="relative z-10"
-            style={{ ...pointedBottom, backgroundColor: '#FFFBFC', overflow: 'hidden' }}
-          >
-            <div className="flex flex-col items-center px-6 pt-6 pb-10 gap-4">
-              <div className="relative w-44 h-44">
-                <svg viewBox="0 0 24 24" className="absolute -top-3 -left-1 w-8 h-8" fill="#FFB7C5">
-                  <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
-                  <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
-                  <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
-                  <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
-                </svg>
-                <svg viewBox="0 0 24 24" className="absolute -top-2 -right-2 w-7 h-7" fill="#FBBF24">
-                  <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
-                  <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
-                  <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
-                  <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
-                </svg>
-                <svg viewBox="0 0 24 24" className="absolute -bottom-2 -left-2 w-7 h-7" fill="#86EFAC">
-                  <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
-                  <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
-                  <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
-                  <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
-                </svg>
-                <svg viewBox="0 0 24 24" className="absolute -bottom-3 -right-1 w-8 h-8" fill="#FFB7C5">
-                  <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
-                  <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
-                  <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
-                  <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
-                </svg>
-                <div className="w-44 h-44 rounded-full overflow-hidden border-4 border-white shadow-md">
-                  {randomImage ? (
-                    <img src={randomImage} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-pink-50 flex items-center justify-center">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-16 h-16">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                      </svg>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <p className="text-base font-bold text-gray-700">今日も一緒にいるね！</p>
-              <div className="relative flex items-center justify-center">
-                <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderRight: '12px solid #FFB7C5' }} />
-                <div className="bg-[#FFB7C5] px-4 py-1">
-                  <span className="text-white text-xs font-medium">今日のうちの子：オキ家のおこめちゃん</span>
-                </div>
-                <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderLeft: '12px solid #FFB7C5' }} />
-              </div>
-              <button
-                onClick={() => router.push('/record')}
-                className="w-full bg-[#FFB7C5] text-white font-bold py-3 rounded-2xl text-sm"
-              >
-                ペットの記録もつける
-              </button>
-              <button onClick={() => setDone(false)} className="text-xs text-gray-400">
-                閉じる
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* スワイプするカード（紙部分のみ） */}
-        {!done && (
-          <div
-            className="relative z-10"
-            style={{
-              transform: cardTransform,
-              transition: cardTransition,
-              cursor: swiping ? 'grabbing' : 'grab',
-            }}
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-            onMouseDown={onMouseDown}
-          >
+          {/* Ω型の吊り穴 */}
+          <div className="flex justify-center pt-2 pb-1">
             <div
               style={{
-                ...pointedBottom,
-                backgroundColor: '#FFFBFC',
-                position: 'relative',
-                overflow: 'hidden',
+                width: '36px',
+                height: '20px',
+                borderRadius: '18px 18px 0 0',
+                border: '3px solid #A0845C',
+                borderBottom: 'none',
+                backgroundColor: '#F5C842',
               }}
+            />
+          </div>
+          {/* 木枠の下の溝（紙を挟む部分） */}
+          <div
+            style={{
+              height: '6px',
+              backgroundColor: '#A0845C',
+              marginTop: '2px',
+            }}
+          />
+        </div>
+
+        {/* カードエリア（後ろのページ＋スワイプカード） */}
+        <div className="relative" style={{ minHeight: '480px' }}>
+
+          {/* 後ろのページ2枚 */}
+          <div
+            className="absolute inset-x-3"
+            style={{ ...paperStyle, top: '4px', bottom: '-8px', zIndex: 1, opacity: 0.7 }}
+          />
+          <div
+            className="absolute inset-x-1"
+            style={{ ...paperStyle, top: '2px', bottom: '-4px', zIndex: 2, opacity: 0.85 }}
+          />
+
+          {/* めくった後のページ */}
+          {done && (
+            <div className="relative z-10" style={paperStyle}>
+              <div className="flex flex-col items-center px-6 pt-8 pb-12 gap-4">
+                <div className="relative w-44 h-44">
+                  <svg viewBox="0 0 24 24" className="absolute -top-3 -left-1 w-8 h-8" fill="#FFB7C5">
+                    <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
+                    <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
+                    <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
+                    <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" className="absolute -top-2 -right-2 w-7 h-7" fill="#FBBF24">
+                    <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
+                    <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
+                    <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
+                    <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" className="absolute -bottom-2 -left-2 w-7 h-7" fill="#86EFAC">
+                    <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
+                    <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
+                    <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
+                    <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" className="absolute -bottom-3 -right-1 w-8 h-8" fill="#FFB7C5">
+                    <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
+                    <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
+                    <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
+                    <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
+                  </svg>
+                  <div className="w-44 h-44 rounded-full overflow-hidden border-4 border-white shadow-md">
+                    {randomImage ? (
+                      <img src={randomImage} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-pink-50 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-16 h-16">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <p className="text-base font-bold text-gray-700">今日も一緒にいるね！</p>
+                <div className="relative flex items-center justify-center">
+                  <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderRight: '12px solid #FFB7C5' }} />
+                  <div className="bg-[#FFB7C5] px-4 py-1">
+                    <span className="text-white text-xs font-medium">今日のうちの子：オキ家のおこめちゃん</span>
+                  </div>
+                  <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderLeft: '12px solid #FFB7C5' }} />
+                </div>
+                <button
+                  onClick={() => router.push('/record')}
+                  className="w-full bg-[#FFB7C5] text-white font-bold py-3 rounded-2xl text-sm"
+                >
+                  ペットの記録もつける
+                </button>
+                <button onClick={() => setDone(false)} className="text-xs text-gray-400">閉じる</button>
+              </div>
+            </div>
+          )}
+
+          {/* スワイプカード（紙のみ） */}
+          {!done && (
+            <div
+              className="relative z-10"
+              style={{
+                transform: cardTransform,
+                transition: cardTransition,
+                cursor: swiping ? 'grabbing' : 'grab',
+              }}
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+              onMouseDown={onMouseDown}
             >
-              {/* 日付 */}
-              <div className="px-5 pt-4 pb-2 flex items-center justify-between">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-xs text-gray-400">{year}年</span>
-                  <span className="text-sm font-medium text-gray-600">{month}月</span>
-                  <span className="text-xs text-gray-400">{MONTHS_EN[today.getMonth()]}</span>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-sm font-bold text-gray-600">{WEEKDAYS_JP[dow]}曜日</span>
-                  <span className="text-xs text-gray-400">{WEEKDAYS_EN[dow]}</span>
-                </div>
-              </div>
+              <div style={{ ...paperStyle, position: 'relative', overflow: 'hidden' }}>
 
-              {/* 区切り線 */}
-              <div className="mx-5 border-t border-gray-100" />
-
-              {/* メインイラスト */}
-              <div className="px-5 pt-3 pb-2">
-                <div className="relative w-full rounded-xl overflow-hidden aspect-square">
-                  <Image src="/main.webp" alt="" fill className="object-cover" priority />
+                {/* 日付 */}
+                <div className="flex items-center justify-between px-5 pt-4 pb-3">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xs text-gray-400">{year}年</span>
+                    <span className="text-sm font-medium text-gray-600">{month}月</span>
+                    <span className="text-xs text-gray-300">{MONTHS_EN[today.getMonth()]}</span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-bold text-gray-600">{WEEKDAYS_JP[dow]}曜日</span>
+                    <span className="text-xs text-gray-300">{WEEKDAYS_EN[dow]}</span>
+                  </div>
                 </div>
-              </div>
 
-              {/* スワイプ誘導・右下折り目 */}
-              <div className="relative px-5 pb-8 pt-2 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-1">
+                {/* 区切り線 */}
+                <div className="mx-5 border-t border-gray-100" />
+
+                {/* メインイラスト */}
+                <div className="px-5 pt-4">
+                  <div className="relative w-full aspect-square rounded-xl overflow-hidden">
+                    <Image src="/main.webp" alt="" fill className="object-cover" priority />
+                  </div>
+                </div>
+
+                {/* スワイプ誘導 */}
+                <div className="relative flex flex-col items-center pt-3 pb-8 gap-1">
                   <p className="text-xs text-gray-400">下にスワイプして記録する</p>
                   <div style={{ animation: 'finger-down 1.2s ease-in-out infinite' }}>
                     <svg viewBox="0 0 24 24" fill="#FFB7C5" className="w-7 h-7">
                       <path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/>
                     </svg>
                   </div>
-                </div>
 
-                {/* 右下の折り目 */}
-                <div
-                  className="absolute bottom-0 right-0"
-                  style={{
-                    width: 0,
-                    height: 0,
-                    borderLeft: '28px solid transparent',
-                    borderBottom: '28px solid #F5C842',
-                  }}
-                />
-                <div
-                  className="absolute bottom-0 right-0"
-                  style={{
-                    width: '28px',
-                    height: '28px',
-                    background: 'linear-gradient(135deg, #e0d8cc 50%, transparent 50%)',
-                  }}
-                />
+                  {/* 右下の折り目 */}
+                  <div className="absolute bottom-0 right-0 w-10 h-10 overflow-hidden">
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        right: 0,
+                        width: 0,
+                        height: 0,
+                        borderLeft: '40px solid transparent',
+                        borderBottom: '40px solid #F5C842',
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        right: 0,
+                        width: '40px',
+                        height: '40px',
+                        background: 'linear-gradient(135deg, #d4cbbf 50%, transparent 50%)',
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* パートナー招待バナー */}
       {!partnerName && (
-        <div className="mx-6 mt-5 bg-white border border-pink-100 rounded-2xl p-4">
+        <div className="mx-5 mt-4 bg-white border border-pink-100 rounded-2xl p-4">
           <p className="text-sm font-bold text-gray-700 mb-2">代理人とアプリで繋がろう</p>
           <p className="text-xs text-gray-500 leading-relaxed mb-3">
             もしもの時には代理人にメールが届きますが、相手もアプリをインストールしている場合はメール＋アプリ通知でWの安心。ペット日記を見せ合えたり、より詳細な引き継ぎデータをわかりやすく閲覧できます。
@@ -432,7 +418,7 @@ export default function HomePage() {
       <style jsx>{`
         @keyframes finger-down {
           0%, 100% { transform: translateY(0); opacity: 1; }
-          50% { transform: translateY(10px); opacity: 0.6; }
+          50% { transform: translateY(10px); opacity: 0.5; }
         }
       `}</style>
 
