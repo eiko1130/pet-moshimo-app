@@ -250,14 +250,14 @@ export default function HomePage() {
         {/* カードエリア（後ろのページ＋スワイプカード） */}
         <div className="relative" style={{ minHeight: '480px' }}>
 
-          {/* 後ろのページ2枚 */}
+          {/* 後ろのページ（下からチラ見え） */}
           <div
-            className="absolute inset-x-3"
-            style={{ ...paperStyle, top: '4px', bottom: '-8px', zIndex: 1, opacity: 0.7 }}
+            className="absolute left-4 right-4 bottom-0 h-6 rounded-b-sm"
+            style={{ backgroundColor: '#e8e0d5', zIndex: 1 }}
           />
           <div
-            className="absolute inset-x-1"
-            style={{ ...paperStyle, top: '2px', bottom: '-4px', zIndex: 2, opacity: 0.85 }}
+            className="absolute left-2 right-2 bottom-0 h-4 rounded-b-sm"
+            style={{ backgroundColor: '#f0ece6', zIndex: 2 }}
           />
 
           {/* めくった後のページ */}
