@@ -22,7 +22,7 @@ const DUMMY_RECORDS = [
     date: '2026-04-07',
     mood: 'good',
     memo: '今日はひなたぼっこしながらうとうとしてた。かわいすぎる。',
-    imageUrl: null,
+    imageUrl: 'https://nukpisixfolbnzkvorym.supabase.co/storage/v1/object/public/pet-images/0.09657611072125127.jpeg',
     items: [],
   },
   {
@@ -34,7 +34,7 @@ const DUMMY_RECORDS = [
     date: '2026-04-07',
     mood: 'good',
     memo: '公園でお散歩！落ち葉をかさかさ踏むのが楽しそうだった。',
-    imageUrl: '/timelinedog1.jpeg',
+    imageUrl: 'https://nukpisixfolbnzkvorym.supabase.co/storage/v1/object/public/pet-images/mock/timelinedog1.jpeg',
     items: ['体重 3.1kg'],
   },
   {
@@ -46,7 +46,7 @@ const DUMMY_RECORDS = [
     date: '2026-04-06',
     mood: 'normal',
     memo: 'ケージの掃除をしたらご機嫌ナナメ。でもごはんはちゃんと食べた。',
-    imageUrl: '/timelinebird1.jpeg',
+    imageUrl: 'https://nukpisixfolbnzkvorym.supabase.co/storage/v1/object/public/pet-images/mock/timelinebird1.jpeg',
     items: [],
   },
   {
@@ -58,7 +58,7 @@ const DUMMY_RECORDS = [
     date: '2026-04-06',
     mood: 'good',
     memo: 'おやつをあげたら手から食べてくれた！成長した…！',
-    imageUrl: null,
+    imageUrl: 'https://nukpisixfolbnzkvorym.supabase.co/storage/v1/object/public/pet-images/0.033192628447572425.jpeg',
     items: ['爪切り'],
   },
   {
@@ -70,7 +70,7 @@ const DUMMY_RECORDS = [
     date: '2026-04-05',
     mood: 'bad',
     memo: '朝からご飯をあまり食べなかった。夕方には元気になったけど心配。',
-    imageUrl: '/timelinedog2.jpeg',
+    imageUrl: 'https://nukpisixfolbnzkvorym.supabase.co/storage/v1/object/public/pet-images/mock/timelinedog2.jpeg',
     items: ['食欲なし'],
   },
   {
@@ -82,7 +82,7 @@ const DUMMY_RECORDS = [
     date: '2026-04-05',
     mood: 'good',
     memo: '今日は歌いっぱなし。元気すぎる。',
-    imageUrl: '/timelinebird2.jpeg',
+    imageUrl: 'https://nukpisixfolbnzkvorym.supabase.co/storage/v1/object/public/pet-images/mock/timelinebird2.jpeg',
     items: [],
   },
   {
