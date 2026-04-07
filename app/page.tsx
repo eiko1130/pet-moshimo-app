@@ -115,20 +115,14 @@ export default function HomePage() {
     startYRef.current = null
   }
 
-  const onTouchStart = (e: React.TouchEvent) => {
-    startYRef.current = e.touches[0].clientY
-    setSwiping(true)
-  }
+  const onTouchStart = (e: React.TouchEvent) => { startYRef.current = e.touches[0].clientY; setSwiping(true) }
   const onTouchMove = (e: React.TouchEvent) => {
     if (startYRef.current === null) return
     const diff = e.touches[0].clientY - startYRef.current
     if (diff > 0) setSwipeY(Math.min(diff, 300))
   }
   const onTouchEnd = () => handleSwipeEnd()
-  const onMouseDown = (e: React.MouseEvent) => {
-    startYRef.current = e.clientY
-    setSwiping(true)
-  }
+  const onMouseDown = (e: React.MouseEvent) => { startYRef.current = e.clientY; setSwiping(true) }
   const onMouseMove = (e: React.MouseEvent) => {
     if (!swiping || startYRef.current === null) return
     const diff = e.clientY - startYRef.current
@@ -148,96 +142,10 @@ export default function HomePage() {
     ? 'transform 0.4s ease-in'
     : swiping ? 'none' : 'transform 0.3s ease-out'
 
-  // カード本体のJSX（表・裏共通部分）
-  const CalendarCard = ({ isBack = false }: { isBack?: boolean }) => (
-    <div
-      className="rounded-2xl shadow-xl overflow-hidden"
-      style={{ backgroundColor: '#FFFBFC' }}
-    >
-      {/* 日付ヘッダー */}
-      <div className="px-5 pt-5 pb-3 flex items-end justify-between">
-        <div className="flex flex-col">
-          <span className="text-xs text-gray-400">{year}</span>
-          <div className="flex items-baseline gap-1">
-            <span className="text-sm text-gray-500">{month}</span>
-            <span className="text-xs text-gray-400">{MONTHS_EN[today.getMonth()]}</span>
-          </div>
-        </div>
-        <div
-          className="font-bold leading-none"
-          style={{ fontSize: '72px', color: '#FFB7C5', lineHeight: 1 }}
-        >
-          {String(day).padStart(2, '0')}
-        </div>
-        <div className="flex flex-col items-end">
-          <span className="text-sm font-bold text-gray-600">{WEEKDAYS_JP[dow]}曜</span>
-          <span className="text-xs text-gray-400">{WEEKDAYS_EN[dow]}</span>
-        </div>
-      </div>
-
-      {/* 区切り線 */}
-      <div className="mx-5 border-t border-pink-100" />
-
-      {/* メインイラスト */}
-      <div className="px-5 pt-4 pb-2">
-        <div className="relative w-full rounded-xl overflow-hidden" style={{ aspectRatio: '1/1' }}>
-          <Image
-            src="/main.webp"
-            alt=""
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
-      </div>
-
-      {/* スワイプ誘導 */}
-      {!isBack && (
-        <div className="flex flex-col items-center pb-5 pt-2 gap-1">
-          <p className="text-xs text-gray-400">下にスワイプして記録する</p>
-          <div style={{ animation: 'finger-bounce 1.5s ease-in-out infinite' }}>
-            <svg viewBox="0 0 24 24" fill="#FFB7C5" className="w-7 h-7">
-              <path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/>
-            </svg>
-          </div>
-        </div>
-      )}
-
-      {/* 完了後のコンテンツ */}
-      {isBack && (
-        <div className="flex flex-col items-center pb-6 pt-2 gap-3 px-5">
-          <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-pink-100 shadow-sm">
-            {randomImage ? (
-              <img src={randomImage} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-pink-50 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-8 h-8">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
-              </div>
-            )}
-          </div>
-          <p className="text-sm font-bold text-gray-700">今日も記録ありがとう！</p>
-          <button
-            onClick={() => router.push('/record')}
-            className="w-full bg-[#FFB7C5] text-white font-bold py-3 rounded-xl text-sm"
-          >
-            ペットの記録もつける
-          </button>
-          <button
-            onClick={() => setDone(false)}
-            className="text-xs text-gray-400"
-          >
-            閉じる
-          </button>
-        </div>
-      )}
-    </div>
-  )
-
   return (
     <div
-      className="min-h-screen bg-[#FFFBFC] pb-24"
+      className="min-h-screen pb-24"
+      style={{ backgroundColor: '#F5C842' }}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
     >
@@ -305,8 +213,8 @@ export default function HomePage() {
       )}
 
       {/* ヘッダー */}
-      <header className="flex items-center justify-between px-5 pt-5 pb-3">
-        <button onClick={() => setMenuOpen(!menuOpen)} className="text-gray-400">
+      <header className="flex items-center justify-between px-5 pt-5 pb-4">
+        <button onClick={() => setMenuOpen(!menuOpen)} className="text-white">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
             <line x1="3" y1="6" x2="21" y2="6"/>
             <line x1="3" y1="12" x2="21" y2="12"/>
@@ -318,16 +226,84 @@ export default function HomePage() {
       </header>
 
       {/* カードエリア */}
-      <div className="px-6 relative" style={{ minHeight: '520px' }}>
+      <div className="px-6 relative" style={{ minHeight: '540px' }}>
 
-        {/* 後ろのページ（チラ見え） */}
-        <div className="absolute inset-x-6 top-2 rounded-2xl shadow-md" style={{ backgroundColor: '#FFFBFC', height: '100%', zIndex: 0 }} />
-        <div className="absolute inset-x-8 top-0 rounded-2xl shadow-sm" style={{ backgroundColor: '#f0ece8', height: '100%', zIndex: -1 }} />
+        {/* 後ろのページ2枚（チラ見え） */}
+        <div
+          className="absolute rounded-2xl shadow-sm"
+          style={{ backgroundColor: '#FFFBFC', inset: '4px 28px 0', zIndex: 0 }}
+        />
+        <div
+          className="absolute rounded-2xl"
+          style={{ backgroundColor: '#f5f0ea', inset: '8px 36px 0', zIndex: -1 }}
+        />
 
-        {/* 完了後のページ */}
+        {/* めくった後のページ（ポップアップ内容） */}
         {done && (
-          <div className="relative z-10">
-            <CalendarCard isBack={true} />
+          <div className="relative z-10 rounded-2xl shadow-xl overflow-hidden" style={{ backgroundColor: '#FFFBFC' }}>
+            {/* 留め具エリア */}
+            <div className="h-8 rounded-t-2xl flex items-center justify-center gap-6" style={{ backgroundColor: '#C8A96E' }}>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: '#A0845C' }} />
+              ))}
+            </div>
+            {/* ポップアップ内容 */}
+            <div className="flex flex-col items-center px-6 pt-6 pb-8 gap-4">
+              <div className="relative w-44 h-44">
+                <svg viewBox="0 0 24 24" className="absolute -top-3 -left-1 w-8 h-8" fill="#FFB7C5">
+                  <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
+                  <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
+                  <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
+                  <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
+                </svg>
+                <svg viewBox="0 0 24 24" className="absolute -top-2 -right-2 w-7 h-7" fill="#FBBF24">
+                  <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
+                  <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
+                  <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
+                  <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
+                </svg>
+                <svg viewBox="0 0 24 24" className="absolute -bottom-2 -left-2 w-7 h-7" fill="#86EFAC">
+                  <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
+                  <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
+                  <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
+                  <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
+                </svg>
+                <svg viewBox="0 0 24 24" className="absolute -bottom-3 -right-1 w-8 h-8" fill="#FFB7C5">
+                  <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
+                  <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
+                  <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
+                  <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
+                </svg>
+                <div className="w-44 h-44 rounded-full overflow-hidden border-4 border-white shadow-md">
+                  {randomImage ? (
+                    <img src={randomImage} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-pink-50 flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-16 h-16">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <p className="text-base font-bold text-gray-700">今日も一緒にいるね！</p>
+              <div className="relative flex items-center justify-center">
+                <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderRight: '12px solid #FFB7C5' }} />
+                <div className="bg-[#FFB7C5] px-4 py-1">
+                  <span className="text-white text-xs font-medium">今日のうちの子：オキ家のおこめちゃん</span>
+                </div>
+                <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderLeft: '12px solid #FFB7C5' }} />
+              </div>
+              <button
+                onClick={() => router.push('/record')}
+                className="w-full bg-[#FFB7C5] text-white font-bold py-3 rounded-2xl text-sm"
+              >
+                ペットの記録もつける
+              </button>
+              <button onClick={() => setDone(false)} className="text-xs text-gray-400">
+                閉じる
+              </button>
+            </div>
           </div>
         )}
 
@@ -345,7 +321,53 @@ export default function HomePage() {
             onTouchEnd={onTouchEnd}
             onMouseDown={onMouseDown}
           >
-            <CalendarCard isBack={false} />
+            <div className="rounded-2xl shadow-xl overflow-hidden" style={{ backgroundColor: '#FFFBFC' }}>
+
+              {/* 留め具エリア（何も書かない・木の色） */}
+              <div className="h-8 rounded-t-2xl flex items-center justify-center gap-6" style={{ backgroundColor: '#C8A96E' }}>
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: '#A0845C' }} />
+                ))}
+              </div>
+
+              {/* 日付エリア */}
+              <div className="px-5 pt-4 pb-2 flex items-end justify-between">
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-400">{year}</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm text-gray-500">{month}</span>
+                    <span className="text-xs text-gray-400">{MONTHS_EN[today.getMonth()]}</span>
+                  </div>
+                </div>
+                <div className="font-bold leading-none" style={{ fontSize: '72px', color: '#FFB7C5', lineHeight: 1 }}>
+                  {String(day).padStart(2, '0')}
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className="text-sm font-bold text-gray-600">{WEEKDAYS_JP[dow]}曜</span>
+                  <span className="text-xs text-gray-400">{WEEKDAYS_EN[dow]}</span>
+                </div>
+              </div>
+
+              {/* 区切り線 */}
+              <div className="mx-5 border-t border-pink-100" />
+
+              {/* メインイラスト */}
+              <div className="px-5 pt-4 pb-2">
+                <div className="relative w-full rounded-xl overflow-hidden aspect-square">
+                  <Image src="/main.webp" alt="" fill className="object-cover" priority />
+                </div>
+              </div>
+
+              {/* スワイプ誘導 */}
+              <div className="flex flex-col items-center pb-5 pt-2 gap-1">
+                <p className="text-xs text-gray-400">下にスワイプして記録する</p>
+                <div style={{ animation: 'finger-bounce 1.5s ease-in-out infinite' }}>
+                  <svg viewBox="0 0 24 24" fill="#FFB7C5" className="w-7 h-7">
+                    <path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
