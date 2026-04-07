@@ -227,10 +227,9 @@ const DummyTimelineCard = ({ record }: { record: typeof DUMMY_RECORDS[0] }) => {
             {record.ownerType === 'self' ? '🐱' : record.ownerType === 'partner' ? '🐕' : '🐦'}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-bold text-gray-700 text-sm">{record.ownerName}</span>
-              <span className="text-xs text-gray-400">の</span>
+          <div className="flex items-center gap-1.5 flex-wrap">
               <span className="font-bold text-gray-700 text-sm">{record.petName}</span>
+              <span className="text-xs text-gray-400">（{record.ownerName}）</span>
               <PartnerBadge type={record.ownerType} />
             </div>
             <span className="text-xs text-gray-400">{dateLabel}</span>
@@ -321,9 +320,9 @@ const TimelineCard = ({
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs text-gray-400">エイコの</span>
+          <div className="flex items-center gap-1.5 flex-wrap">
               <span className="font-bold text-gray-700 text-sm">{pet?.name ?? '不明'}</span>
+              <span className="text-xs text-gray-400">（エイコ）</span>
             </div>
             <span className="text-xs text-gray-400">{dateLabel}</span>
           </div>
