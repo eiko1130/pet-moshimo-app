@@ -23,7 +23,7 @@ const DUMMY_RECORDS = [
     mood: 'good',
     memo: '今日はひなたぼっこしながらうとうとしてた。かわいすぎる。',
     imageUrl: 'https://nukpisixfolbnzkvorym.supabase.co/storage/v1/object/public/pet-images/0.09657611072125127.jpeg',
-    items: [],
+    items: ['体重 3.8kg', '体温 38.5℃'],
   },
   {
     id: 'dummy-2',
@@ -35,7 +35,7 @@ const DUMMY_RECORDS = [
     mood: 'good',
     memo: '公園でお散歩！落ち葉をかさかさ踏むのが楽しそうだった。',
     imageUrl: 'https://nukpisixfolbnzkvorym.supabase.co/storage/v1/object/public/pet-images/mock/timelinedog1.jpeg',
-    items: ['体重 3.1kg'],
+    items: ['体重 3.1kg', '爪切り'],
   },
   {
     id: 'dummy-3',
@@ -47,7 +47,7 @@ const DUMMY_RECORDS = [
     mood: 'normal',
     memo: 'ケージの掃除をしたらご機嫌ナナメ。でもごはんはちゃんと食べた。',
     imageUrl: 'https://nukpisixfolbnzkvorym.supabase.co/storage/v1/object/public/pet-images/mock/timelinebird1.jpeg',
-    items: [],
+    items: ['体重 85g'],
   },
   {
     id: 'dummy-4',
@@ -59,7 +59,7 @@ const DUMMY_RECORDS = [
     mood: 'good',
     memo: 'おやつをあげたら手から食べてくれた！成長した…！',
     imageUrl: 'https://nukpisixfolbnzkvorym.supabase.co/storage/v1/object/public/pet-images/0.033192628447572425.jpeg',
-    items: ['爪切り'],
+    items: ['体重 4.1kg', '爪切り'],
   },
   {
     id: 'dummy-5',
@@ -71,7 +71,7 @@ const DUMMY_RECORDS = [
     mood: 'bad',
     memo: '朝からご飯をあまり食べなかった。夕方には元気になったけど心配。',
     imageUrl: 'https://nukpisixfolbnzkvorym.supabase.co/storage/v1/object/public/pet-images/mock/timelinedog2.jpeg',
-    items: ['食欲なし'],
+    items: ['食欲なし', '嘔吐'],
   },
   {
     id: 'dummy-6',
@@ -83,7 +83,7 @@ const DUMMY_RECORDS = [
     mood: 'good',
     memo: '今日は歌いっぱなし。元気すぎる。',
     imageUrl: 'https://nukpisixfolbnzkvorym.supabase.co/storage/v1/object/public/pet-images/mock/timelinebird2.jpeg',
-    items: [],
+    items: ['体重 83g'],
   },
   {
     id: 'dummy-7',
@@ -95,7 +95,7 @@ const DUMMY_RECORDS = [
     mood: 'normal',
     memo: '少し鼻水が出てたので様子見。',
     imageUrl: null,
-    items: ['体温 38.2℃'],
+    items: ['体温 39.1℃'],
   },
   {
     id: 'dummy-8',
@@ -107,7 +107,7 @@ const DUMMY_RECORDS = [
     mood: 'good',
     memo: 'ドッグランデビュー！他のわんちゃんとも仲良くできた。',
     imageUrl: null,
-    items: [],
+    items: ['体重 3.2kg', '体温 38.6℃'],
   },
   {
     id: 'dummy-9',
@@ -119,7 +119,7 @@ const DUMMY_RECORDS = [
     mood: 'good',
     memo: 'お気に入りのおもちゃで遊んでいた。',
     imageUrl: null,
-    items: [],
+    items: ['体重 4.0kg'],
   },
   {
     id: 'dummy-10',
@@ -131,7 +131,7 @@ const DUMMY_RECORDS = [
     mood: 'normal',
     memo: '換羽期かも。羽根がよく落ちてる。',
     imageUrl: null,
-    items: [],
+    items: ['体重 82g', '排泄異常'],
   },
 ]
 
