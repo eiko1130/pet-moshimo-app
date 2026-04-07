@@ -29,7 +29,6 @@ export default function HomePage() {
   const { user } = useAuth()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [pets, setPets] = useState<Pet[]>([])
   const [randomImage, setRandomImage] = useState<string | null>(null)
   const [partnerName, setPartnerName] = useState<string | null>(null)
 
@@ -53,7 +52,6 @@ export default function HomePage() {
         .select('id, name, image_url')
         .eq('user_id', user.id)
         .order('created_at')
-      setPets(petsData ?? [])
 
       const todayStr = toLocalDateString()
       const { data: recordsData } = await supabase
@@ -142,6 +140,11 @@ export default function HomePage() {
     ? 'transform 0.4s ease-in'
     : swiping ? 'none' : 'transform 0.3s ease-out'
 
+  // 尖った下辺のクリップパス
+  const pointedBottom = {
+    clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 16px), 50% 100%, 0 calc(100% - 16px))'
+  }
+
   return (
     <div
       className="min-h-screen pb-24"
@@ -213,7 +216,7 @@ export default function HomePage() {
       )}
 
       {/* ヘッダー */}
-      <header className="flex items-center justify-between px-5 pt-5 pb-4">
+      <header className="flex items-center justify-between px-5 pt-5 pb-2">
         <button onClick={() => setMenuOpen(!menuOpen)} className="text-white">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
             <line x1="3" y1="6" x2="21" y2="6"/>
@@ -225,30 +228,53 @@ export default function HomePage() {
         <div className="w-6" />
       </header>
 
+      {/* 木枠（固定・動かない） */}
+      <div className="px-6 pt-2">
+        <div
+          className="relative rounded-t-2xl flex items-center justify-center py-3"
+          style={{ backgroundColor: '#C8A96E' }}
+        >
+          {/* Ω型の穴 */}
+          <div className="flex flex-col items-center">
+            <div
+              className="w-8 h-4 rounded-t-full border-2"
+              style={{ borderColor: '#A0845C', borderBottom: 'none', backgroundColor: '#F5C842' }}
+            />
+            <div className="w-10 h-1" style={{ backgroundColor: '#A0845C' }} />
+          </div>
+        </div>
+      </div>
+
       {/* カードエリア */}
-      <div className="px-6 relative" style={{ minHeight: '540px' }}>
+      <div className="px-6 relative" style={{ minHeight: '500px' }}>
 
-        {/* 後ろのページ2枚（チラ見え） */}
+        {/* 後ろのページ2・3枚（尖った形） */}
         <div
-          className="absolute rounded-2xl shadow-sm"
-          style={{ backgroundColor: '#FFFBFC', inset: '4px 28px 0', zIndex: 0 }}
+          className="absolute"
+          style={{
+            ...pointedBottom,
+            backgroundColor: '#e8e0d5',
+            inset: '6px 20px 0',
+            zIndex: 0,
+          }}
         />
         <div
-          className="absolute rounded-2xl"
-          style={{ backgroundColor: '#f5f0ea', inset: '8px 36px 0', zIndex: -1 }}
+          className="absolute"
+          style={{
+            ...pointedBottom,
+            backgroundColor: '#f0ece6',
+            inset: '3px 12px 0',
+            zIndex: 1,
+          }}
         />
 
-        {/* めくった後のページ（ポップアップ内容） */}
+        {/* めくった後のページ */}
         {done && (
-          <div className="relative z-10 rounded-2xl shadow-xl overflow-hidden" style={{ backgroundColor: '#FFFBFC' }}>
-            {/* 留め具エリア */}
-            <div className="h-8 rounded-t-2xl flex items-center justify-center gap-6" style={{ backgroundColor: '#C8A96E' }}>
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: '#A0845C' }} />
-              ))}
-            </div>
-            {/* ポップアップ内容 */}
-            <div className="flex flex-col items-center px-6 pt-6 pb-8 gap-4">
+          <div
+            className="relative z-10"
+            style={{ ...pointedBottom, backgroundColor: '#FFFBFC', overflow: 'hidden' }}
+          >
+            <div className="flex flex-col items-center px-6 pt-6 pb-10 gap-4">
               <div className="relative w-44 h-44">
                 <svg viewBox="0 0 24 24" className="absolute -top-3 -left-1 w-8 h-8" fill="#FFB7C5">
                   <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
@@ -307,7 +333,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* スワイプするカード */}
+        {/* スワイプするカード（紙部分のみ） */}
         {!done && (
           <div
             className="relative z-10"
@@ -321,51 +347,66 @@ export default function HomePage() {
             onTouchEnd={onTouchEnd}
             onMouseDown={onMouseDown}
           >
-            <div className="rounded-2xl shadow-xl overflow-hidden" style={{ backgroundColor: '#FFFBFC' }}>
-
-              {/* 留め具エリア（何も書かない・木の色） */}
-              <div className="h-8 rounded-t-2xl flex items-center justify-center gap-6" style={{ backgroundColor: '#C8A96E' }}>
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: '#A0845C' }} />
-                ))}
-              </div>
-
-              {/* 日付エリア */}
-              <div className="px-5 pt-4 pb-2 flex items-end justify-between">
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-400">{year}</span>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-sm text-gray-500">{month}</span>
-                    <span className="text-xs text-gray-400">{MONTHS_EN[today.getMonth()]}</span>
-                  </div>
+            <div
+              style={{
+                ...pointedBottom,
+                backgroundColor: '#FFFBFC',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              {/* 日付 */}
+              <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xs text-gray-400">{year}年</span>
+                  <span className="text-sm font-medium text-gray-600">{month}月</span>
+                  <span className="text-xs text-gray-400">{MONTHS_EN[today.getMonth()]}</span>
                 </div>
-                <div className="font-bold leading-none" style={{ fontSize: '72px', color: '#FFB7C5', lineHeight: 1 }}>
-                  {String(day).padStart(2, '0')}
-                </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-sm font-bold text-gray-600">{WEEKDAYS_JP[dow]}曜</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-sm font-bold text-gray-600">{WEEKDAYS_JP[dow]}曜日</span>
                   <span className="text-xs text-gray-400">{WEEKDAYS_EN[dow]}</span>
                 </div>
               </div>
 
               {/* 区切り線 */}
-              <div className="mx-5 border-t border-pink-100" />
+              <div className="mx-5 border-t border-gray-100" />
 
               {/* メインイラスト */}
-              <div className="px-5 pt-4 pb-2">
+              <div className="px-5 pt-3 pb-2">
                 <div className="relative w-full rounded-xl overflow-hidden aspect-square">
                   <Image src="/main.webp" alt="" fill className="object-cover" priority />
                 </div>
               </div>
 
-              {/* スワイプ誘導 */}
-              <div className="flex flex-col items-center pb-5 pt-2 gap-1">
-                <p className="text-xs text-gray-400">下にスワイプして記録する</p>
-                <div style={{ animation: 'finger-bounce 1.5s ease-in-out infinite' }}>
-                  <svg viewBox="0 0 24 24" fill="#FFB7C5" className="w-7 h-7">
-                    <path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/>
-                  </svg>
+              {/* スワイプ誘導・右下折り目 */}
+              <div className="relative px-5 pb-8 pt-2 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-1">
+                  <p className="text-xs text-gray-400">下にスワイプして記録する</p>
+                  <div style={{ animation: 'finger-down 1.2s ease-in-out infinite' }}>
+                    <svg viewBox="0 0 24 24" fill="#FFB7C5" className="w-7 h-7">
+                      <path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/>
+                    </svg>
+                  </div>
                 </div>
+
+                {/* 右下の折り目 */}
+                <div
+                  className="absolute bottom-0 right-0"
+                  style={{
+                    width: 0,
+                    height: 0,
+                    borderLeft: '28px solid transparent',
+                    borderBottom: '28px solid #F5C842',
+                  }}
+                />
+                <div
+                  className="absolute bottom-0 right-0"
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    background: 'linear-gradient(135deg, #e0d8cc 50%, transparent 50%)',
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -389,9 +430,9 @@ export default function HomePage() {
       )}
 
       <style jsx>{`
-        @keyframes finger-bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(8px); }
+        @keyframes finger-down {
+          0%, 100% { transform: translateY(0); opacity: 1; }
+          50% { transform: translateY(10px); opacity: 0.6; }
         }
       `}</style>
 
