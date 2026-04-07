@@ -21,7 +21,9 @@ const toLocalDateString = () => {
   return `${y}-${m}-${d}`
 }
 
-const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
+const WEEKDAYS_JP = ['日', '月', '火', '水', '木', '金', '土']
+const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -31,7 +33,6 @@ export default function HomePage() {
   const [randomImage, setRandomImage] = useState<string | null>(null)
   const [partnerName, setPartnerName] = useState<string | null>(null)
 
-  // カード状態
   const [swipeY, setSwipeY] = useState(0)
   const [swiping, setSwiping] = useState(false)
   const [peeled, setPeeled] = useState(false)
@@ -39,7 +40,10 @@ export default function HomePage() {
   const startYRef = useRef<number | null>(null)
 
   const today = new Date()
-  const dateLabel = `${today.getMonth() + 1}月${today.getDate()}日（${WEEKDAYS[today.getDay()]}）`
+  const year = today.getFullYear()
+  const month = today.getMonth() + 1
+  const day = today.getDate()
+  const dow = today.getDay()
 
   useEffect(() => {
     if (!user) return
@@ -57,7 +61,7 @@ export default function HomePage() {
         .select('image_url')
         .eq('user_id', user.id)
         .eq('date', todayStr)
-      const images = (recordsData ?? []).map(r => r.image_url).filter(Boolean) as string[]
+      const images = (recordsData ?? []).map((r: any) => r.image_url).filter(Boolean) as string[]
       if (images.length > 0) {
         setRandomImage(images[Math.floor(Math.random() * images.length)])
       } else {
@@ -68,7 +72,7 @@ export default function HomePage() {
           .not('image_url', 'is', null)
           .order('created_at', { ascending: false })
           .limit(20)
-        const pastImages = (pastRecords ?? []).map(r => r.image_url).filter(Boolean) as string[]
+        const pastImages = (pastRecords ?? []).map((r: any) => r.image_url).filter(Boolean) as string[]
         if (pastImages.length > 0) {
           setRandomImage(pastImages[Math.floor(Math.random() * pastImages.length)])
         }
@@ -121,7 +125,6 @@ export default function HomePage() {
     if (diff > 0) setSwipeY(Math.min(diff, 300))
   }
   const onTouchEnd = () => handleSwipeEnd()
-
   const onMouseDown = (e: React.MouseEvent) => {
     startYRef.current = e.clientY
     setSwiping(true)
@@ -139,11 +142,98 @@ export default function HomePage() {
   }
 
   const cardTransform = peeled
-    ? 'translateY(110%) rotate(4deg)'
-    : `translateY(${swipeY}px) rotate(${swipeY * 0.015}deg)`
+    ? 'translateY(110%) rotate(3deg)'
+    : `translateY(${swipeY}px) rotate(${swipeY * 0.01}deg)`
   const cardTransition = peeled
     ? 'transform 0.4s ease-in'
     : swiping ? 'none' : 'transform 0.3s ease-out'
+
+  // カード本体のJSX（表・裏共通部分）
+  const CalendarCard = ({ isBack = false }: { isBack?: boolean }) => (
+    <div
+      className="rounded-2xl shadow-xl overflow-hidden"
+      style={{ backgroundColor: '#FFFBFC' }}
+    >
+      {/* 日付ヘッダー */}
+      <div className="px-5 pt-5 pb-3 flex items-end justify-between">
+        <div className="flex flex-col">
+          <span className="text-xs text-gray-400">{year}</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-sm text-gray-500">{month}</span>
+            <span className="text-xs text-gray-400">{MONTHS_EN[today.getMonth()]}</span>
+          </div>
+        </div>
+        <div
+          className="font-bold leading-none"
+          style={{ fontSize: '72px', color: '#FFB7C5', lineHeight: 1 }}
+        >
+          {String(day).padStart(2, '0')}
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-sm font-bold text-gray-600">{WEEKDAYS_JP[dow]}曜</span>
+          <span className="text-xs text-gray-400">{WEEKDAYS_EN[dow]}</span>
+        </div>
+      </div>
+
+      {/* 区切り線 */}
+      <div className="mx-5 border-t border-pink-100" />
+
+      {/* メインイラスト */}
+      <div className="px-5 pt-4 pb-2">
+        <div className="relative w-full rounded-xl overflow-hidden" style={{ aspectRatio: '1/1' }}>
+          <Image
+            src="/main.webp"
+            alt=""
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+      </div>
+
+      {/* スワイプ誘導 */}
+      {!isBack && (
+        <div className="flex flex-col items-center pb-5 pt-2 gap-1">
+          <p className="text-xs text-gray-400">下にスワイプして記録する</p>
+          <div style={{ animation: 'finger-bounce 1.5s ease-in-out infinite' }}>
+            <svg viewBox="0 0 24 24" fill="#FFB7C5" className="w-7 h-7">
+              <path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/>
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {/* 完了後のコンテンツ */}
+      {isBack && (
+        <div className="flex flex-col items-center pb-6 pt-2 gap-3 px-5">
+          <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-pink-100 shadow-sm">
+            {randomImage ? (
+              <img src={randomImage} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-pink-50 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-8 h-8">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </div>
+            )}
+          </div>
+          <p className="text-sm font-bold text-gray-700">今日も記録ありがとう！</p>
+          <button
+            onClick={() => router.push('/record')}
+            className="w-full bg-[#FFB7C5] text-white font-bold py-3 rounded-xl text-sm"
+          >
+            ペットの記録もつける
+          </button>
+          <button
+            onClick={() => setDone(false)}
+            className="text-xs text-gray-400"
+          >
+            閉じる
+          </button>
+        </div>
+      )}
+    </div>
+  )
 
   return (
     <div
@@ -214,50 +304,37 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* ヘッダー */}
+      <header className="flex items-center justify-between px-5 pt-5 pb-3">
+        <button onClick={() => setMenuOpen(!menuOpen)} className="text-gray-400">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <Image src="/logo.webp" alt="うちの子バトン" width={160} height={54} className="object-contain" priority />
+        <div className="w-6" />
+      </header>
+
       {/* カードエリア */}
-      <div className="relative overflow-hidden">
+      <div className="px-6 relative" style={{ minHeight: '520px' }}>
 
-        {/* 裏ページ（めくった後に見えるページ） */}
-        <div className="bg-white min-h-screen">
-          {/* ヘッダー */}
-          <div className="bg-[#FFB7C5] px-5 pt-5 pb-4 flex items-center justify-between">
-            <div className="w-6" />
-            <Image src="/logo.webp" alt="うちの子バトン" width={160} height={54} className="object-contain" priority />
-            <div className="w-6" />
-          </div>
-          <div className="flex flex-col items-center px-6 pt-6 gap-5">
-            <p className="text-sm text-gray-400">{dateLabel}</p>
-            <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-pink-100 shadow-md">
-              {randomImage ? (
-                <img src={randomImage} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-pink-50 flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-16 h-16">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                  </svg>
-                </div>
-              )}
-            </div>
-            <p className="text-lg font-bold text-gray-700">今日も記録ありがとう！</p>
-            <button
-              onClick={() => router.push('/record')}
-              className="w-full bg-[#FFB7C5] text-white font-bold py-4 rounded-2xl text-sm"
-            >
-              ペットの記録もつける
-            </button>
-            <button
-              onClick={() => setDone(false)}
-              className="text-xs text-gray-400"
-            >
-              閉じる
-            </button>
-          </div>
-        </div>
+        {/* 後ろのページ（チラ見え） */}
+        <div className="absolute inset-x-6 top-2 rounded-2xl shadow-md" style={{ backgroundColor: '#FFFBFC', height: '100%', zIndex: 0 }} />
+        <div className="absolute inset-x-8 top-0 rounded-2xl shadow-sm" style={{ backgroundColor: '#f0ece8', height: '100%', zIndex: -1 }} />
 
-        {/* 表ページ（スワイプするカード） */}
+        {/* 完了後のページ */}
+        {done && (
+          <div className="relative z-10">
+            <CalendarCard isBack={true} />
+          </div>
+        )}
+
+        {/* スワイプするカード */}
         {!done && (
           <div
-            className="absolute inset-0"
+            className="relative z-10"
             style={{
               transform: cardTransform,
               transition: cardTransition,
@@ -268,74 +345,31 @@ export default function HomePage() {
             onTouchEnd={onTouchEnd}
             onMouseDown={onMouseDown}
           >
-            {/* ヘッダー */}
-            <div className="bg-[#FFB7C5] px-5 pt-5 pb-4 flex items-center justify-between">
-              <button onClick={() => setMenuOpen(!menuOpen)} className="text-white">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
-                  <line x1="3" y1="6" x2="21" y2="6"/>
-                  <line x1="3" y1="12" x2="21" y2="12"/>
-                  <line x1="3" y1="18" x2="21" y2="18"/>
-                </svg>
-              </button>
-              <Image src="/logo.webp" alt="うちの子バトン" width={160} height={54} className="object-contain" priority />
-              <div className="w-6" />
-            </div>
-
-            {/* カード本体 */}
-            <div className="bg-[#FFFBFC] min-h-screen">
-              {/* 日付 */}
-              <p className="text-center text-sm text-gray-400 pt-4">{dateLabel}</p>
-
-              {/* メインイラスト */}
-              <div className="px-6 pt-2">
-                <div className="relative w-full rounded-3xl overflow-hidden">
-                  <div className="relative w-full aspect-square">
-                    <Image
-                      src="/main.webp"
-                      alt=""
-                      fill
-                      className="object-cover"
-                      priority
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* スワイプ誘導アニメーション */}
-              <div className="flex flex-col items-center pt-4 gap-1">
-                <p className="text-xs text-gray-400">下にスワイプして記録する</p>
-                <div style={{ animation: 'swipe-down 1.5s ease-in-out infinite' }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} className="w-6 h-6">
-                    <polyline points="7 13 12 18 17 13"/>
-                    <polyline points="7 6 12 11 17 6"/>
-                  </svg>
-                </div>
-              </div>
-
-              {/* パートナー招待バナー */}
-              {!partnerName && (
-                <div className="mx-6 mt-5 bg-white border border-pink-100 rounded-2xl p-4">
-                  <p className="text-sm font-bold text-gray-700 mb-2">代理人とアプリで繋がろう</p>
-                  <p className="text-xs text-gray-500 leading-relaxed mb-3">
-                    もしもの時には代理人にメールが届きますが、相手もアプリをインストールしている場合はメール＋アプリ通知でWの安心。ペット日記を見せ合えたり、より詳細な引き継ぎデータをわかりやすく閲覧できます。
-                  </p>
-                  <Link
-                    href="/settings/contacts"
-                    className="block w-full bg-[#FFB7C5] text-white text-sm font-bold py-3 rounded-xl text-center"
-                  >
-                    パートナーを招待する
-                  </Link>
-                </div>
-              )}
-            </div>
+            <CalendarCard isBack={false} />
           </div>
         )}
       </div>
 
+      {/* パートナー招待バナー */}
+      {!partnerName && (
+        <div className="mx-6 mt-5 bg-white border border-pink-100 rounded-2xl p-4">
+          <p className="text-sm font-bold text-gray-700 mb-2">代理人とアプリで繋がろう</p>
+          <p className="text-xs text-gray-500 leading-relaxed mb-3">
+            もしもの時には代理人にメールが届きますが、相手もアプリをインストールしている場合はメール＋アプリ通知でWの安心。ペット日記を見せ合えたり、より詳細な引き継ぎデータをわかりやすく閲覧できます。
+          </p>
+          <Link
+            href="/settings/contacts"
+            className="block w-full bg-[#FFB7C5] text-white text-sm font-bold py-3 rounded-xl text-center"
+          >
+            パートナーを招待する
+          </Link>
+        </div>
+      )}
+
       <style jsx>{`
-        @keyframes swipe-down {
-          0%, 100% { transform: translateY(0); opacity: 1; }
-          50% { transform: translateY(8px); opacity: 0.5; }
+        @keyframes finger-bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(8px); }
         }
       `}</style>
 
