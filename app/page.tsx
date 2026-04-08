@@ -129,7 +129,6 @@ export default function HomePage() {
 
   // 紙の形（下が尖る）
   const paperStyle: React.CSSProperties = {
-    clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 20px), 50% 100%, 0 calc(100% - 20px))',
     backgroundColor: '#FFFEF9',
   }
 
@@ -263,7 +262,7 @@ export default function HomePage() {
           {/* めくった後のページ */}
           {done && (
             <div className="relative z-10" style={paperStyle}>
-              <div className="flex flex-col items-center px-6 pt-8 pb-12 gap-4">
+             <div className="flex flex-col items-center px-6 pt-8 pb-24 gap-4">
                 <div className="relative w-44 h-44">
                   <svg viewBox="0 0 24 24" className="absolute -top-3 -left-1 w-8 h-8" fill="#FFB7C5">
                     <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
