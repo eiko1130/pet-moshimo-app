@@ -216,8 +216,7 @@ export default function HomePage() {
       </header>
 
       {/* カレンダー本体 */}
-      <div className="px-5">
-
+      <div className="px-8">
         {/* 木枠（固定・動かない） */}
         <div
           className="relative rounded-t-2xl shadow-lg"
@@ -248,6 +247,9 @@ export default function HomePage() {
 
         {/* カードエリア（後ろのページ＋スワイプカード） */}
         <div className="relative" style={{ minHeight: '480px' }}>
+          {/* 後ろのページ（チラ見え・厚み表現） */}
+          <div className="absolute inset-x-4 bottom-0 top-2 rounded-b-sm shadow-sm" style={{ backgroundColor: '#e8e2d8', zIndex: 0 }} />
+          <div className="absolute inset-x-2 bottom-0 top-1 rounded-b-sm" style={{ backgroundColor: '#f0ece6', zIndex: 1 }} />
 
           {/* 後ろのページ（下からチラ見え） */}
           <div
