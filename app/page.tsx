@@ -41,7 +41,6 @@ export default function HomePage() {
   const today = new Date()
   const year = today.getFullYear()
   const month = today.getMonth() + 1
-  const day = today.getDate()
   const dow = today.getDay()
 
   useEffect(() => {
@@ -127,11 +126,6 @@ export default function HomePage() {
     ? 'transform 0.4s ease-in'
     : swiping ? 'none' : 'transform 0.3s ease-out'
 
-  // 紙の形（下が尖る）
-  const paperStyle: React.CSSProperties = {
-    backgroundColor: '#FFFEF9',
-  }
-
   return (
     <div
       className="min-h-screen pb-24"
@@ -202,69 +196,54 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ヘッダー（ロゴ） */}
+      {/* ヘッダー */}
       <header className="flex items-center justify-between px-5 pt-5 pb-3">
-        <button onClick={() => setMenuOpen(!menuOpen)} className="text-white opacity-70">
+        <button onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#7a4a00' }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
             <line x1="3" y1="6" x2="21" y2="6"/>
             <line x1="3" y1="12" x2="21" y2="12"/>
             <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
         </button>
-        <Image src="/logo.webp" alt="うちの子バトン" width={160} height={54} className="object-contain" priority />
+        <Image src="/logo.webp" alt="うちの子バトン" width={200} height={67} className="object-contain" priority />
         <div className="w-6" />
       </header>
 
       {/* カレンダー本体 */}
       <div className="px-8">
-        {/* 木枠（固定・動かない） */}
+
+        {/* 木枠（固定・動かない・紙より少し広い） */}
         <div
-          className="relative rounded-t-2xl shadow-lg"
-          style={{ backgroundColor: '#C8A96E', paddingBottom: '6px' }}
+          className="relative rounded-t-2xl"
+          style={{ backgroundColor: '#C8A96E' }}
         >
           {/* Ω型の吊り穴 */}
           <div className="flex justify-center pt-2 pb-1">
-            <div
-              style={{
-                width: '36px',
-                height: '20px',
-                borderRadius: '18px 18px 0 0',
-                border: '3px solid #A0845C',
-                borderBottom: 'none',
-                backgroundColor: '#F5C842',
-              }}
-            />
+            <div style={{
+              width: '40px',
+              height: '22px',
+              borderRadius: '20px 20px 0 0',
+              border: '3px solid #A0845C',
+              borderBottom: 'none',
+              backgroundColor: '#F5C842',
+            }} />
           </div>
-          {/* 木枠の下の溝（紙を挟む部分） */}
-          <div
-            style={{
-              height: '6px',
-              backgroundColor: '#A0845C',
-              marginTop: '2px',
-            }}
-          />
+          {/* 木枠下の濃い帯 */}
+          <div style={{ height: '8px', backgroundColor: '#A0845C', marginTop: '2px' }} />
         </div>
 
-        {/* カードエリア（後ろのページ＋スワイプカード） */}
+        {/* カードエリア */}
         <div className="relative" style={{ minHeight: '480px' }}>
-          {/* 後ろのページ（チラ見え・厚み表現） */}
-          <div className="absolute inset-x-4 bottom-0 top-2 rounded-b-sm shadow-sm" style={{ backgroundColor: '#e8e2d8', zIndex: 0 }} />
-          <div className="absolute inset-x-2 bottom-0 top-1 rounded-b-sm" style={{ backgroundColor: '#f0ece6', zIndex: 1 }} />
 
-          {/* 後ろのページ（下からチラ見え） */}
-          <div
-            className="absolute left-4 right-4 bottom-0 h-6 rounded-b-sm"
-            style={{ backgroundColor: '#e8e0d5', zIndex: 1 }}
-          />
-          <div
-            className="absolute left-2 right-2 bottom-0 h-4 rounded-b-sm"
-            style={{ backgroundColor: '#f0ece6', zIndex: 2 }}
-          />
+          {/* 後ろのページ3枚（紙より少し幅広でずらす） */}
+          <div className="absolute inset-x-0 top-2 bottom-0" style={{ backgroundColor: '#ccc5b8', zIndex: 0, marginLeft: '-6px', marginRight: '-6px' }} />
+          <div className="absolute inset-x-0 top-1 bottom-0" style={{ backgroundColor: '#ddd8ce', zIndex: 1, marginLeft: '-3px', marginRight: '-3px' }} />
+          <div className="absolute inset-x-0 top-0 bottom-0" style={{ backgroundColor: '#edeae4', zIndex: 2 }} />
 
           {/* めくった後のページ */}
           {done && (
-            <div className="relative z-10" style={paperStyle}>
-             <div className="flex flex-col items-center px-6 pt-8 pb-24 gap-4">
+            <div className="relative z-10" style={{ backgroundColor: '#FFFEF9', overflow: 'hidden' }}>
+              <div className="flex flex-col items-center px-6 pt-8 pb-24 gap-4">
                 <div className="relative w-44 h-44">
                   <svg viewBox="0 0 24 24" className="absolute -top-3 -left-1 w-8 h-8" fill="#FFB7C5">
                     <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
@@ -321,7 +300,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* スワイプカード（紙のみ） */}
+          {/* スワイプカード（紙のみ・木枠より少し幅狭） */}
           {!done && (
             <div
               className="relative z-10"
@@ -329,32 +308,36 @@ export default function HomePage() {
                 transform: cardTransform,
                 transition: cardTransition,
                 cursor: swiping ? 'grabbing' : 'grab',
+                margin: '0 4px',
               }}
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEnd}
               onMouseDown={onMouseDown}
             >
-              <div style={{ ...paperStyle, position: 'relative', overflow: 'hidden' }}>
+              <div style={{ backgroundColor: '#FFFEF9', position: 'relative', overflow: 'hidden' }}>
 
                 {/* 日付 */}
-                <div className="flex items-center justify-between px-5 pt-4 pb-3">
+                <div className="flex items-center justify-between px-5 pt-4 pb-2">
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-xs text-gray-400">{year}年</span>
-                    <span className="text-sm font-medium text-gray-600">{month}月</span>
-                    <span className="text-xs text-gray-300">{MONTHS_EN[today.getMonth()]}</span>
+                    <span className="text-xs" style={{ color: '#ccc' }}>{year}年</span>
+                    <span className="text-sm font-medium" style={{ color: '#aaa' }}>{month}月</span>
+                    <span className="text-xs" style={{ color: '#ddd' }}>{MONTHS_EN[today.getMonth()]}</span>
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-sm font-bold text-gray-600">{WEEKDAYS_JP[dow]}曜日</span>
-                    <span className="text-xs text-gray-300">{WEEKDAYS_EN[dow]}</span>
+                    <span className="text-sm font-bold" style={{ color: '#aaa' }}>{WEEKDAYS_JP[dow]}曜日</span>
+                    <span className="text-xs" style={{ color: '#ddd' }}>{WEEKDAYS_EN[dow]}</span>
                   </div>
                 </div>
 
                 {/* 区切り線 */}
                 <div className="mx-5 border-t border-gray-100" />
 
+                {/* 「今日もめくって記録しよう」 */}
+                <p className="text-center text-xs pt-3" style={{ color: '#ccc' }}>今日もめくって記録しよう</p>
+
                 {/* メインイラスト */}
-                <div className="px-5 pt-4">
+                <div className="px-5 pt-2">
                   <div className="relative w-full aspect-square rounded-xl overflow-hidden">
                     <Image src="/main.webp" alt="" fill className="object-cover" priority />
                   </div>
@@ -362,7 +345,7 @@ export default function HomePage() {
 
                 {/* スワイプ誘導 */}
                 <div className="relative flex flex-col items-center pt-3 pb-8 gap-1">
-                  <p className="text-xs text-gray-400">下にスワイプして記録する</p>
+                  <p className="text-xs" style={{ color: '#ccc' }}>下にスワイプして記録する</p>
                   <div style={{ animation: 'finger-down 1.2s ease-in-out infinite' }}>
                     <svg viewBox="0 0 24 24" fill="#FFB7C5" className="w-7 h-7">
                       <path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/>
@@ -370,28 +353,18 @@ export default function HomePage() {
                   </div>
 
                   {/* 右下の折り目 */}
-                  <div className="absolute bottom-0 right-0 w-10 h-10 overflow-hidden">
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        right: 0,
-                        width: 0,
-                        height: 0,
-                        borderLeft: '40px solid transparent',
-                        borderBottom: '40px solid #F5C842',
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        right: 0,
-                        width: '40px',
-                        height: '40px',
-                        background: 'linear-gradient(135deg, #d4cbbf 50%, transparent 50%)',
-                      }}
-                    />
+                  <div className="absolute bottom-0 right-0 w-10 h-10">
+                    <div style={{
+                      position: 'absolute', bottom: 0, right: 0,
+                      width: 0, height: 0,
+                      borderLeft: '40px solid transparent',
+                      borderBottom: '40px solid #F5C842',
+                    }} />
+                    <div style={{
+                      position: 'absolute', bottom: 0, right: 0,
+                      width: '40px', height: '40px',
+                      background: 'linear-gradient(135deg, #d4cbbf 50%, transparent 50%)',
+                    }} />
                   </div>
                 </div>
               </div>
@@ -402,7 +375,7 @@ export default function HomePage() {
 
       {/* パートナー招待バナー */}
       {!partnerName && (
-        <div className="mx-5 mt-4 bg-white border border-pink-100 rounded-2xl p-4">
+        <div className="mx-8 mt-5 bg-white border border-pink-100 rounded-2xl p-4">
           <p className="text-sm font-bold text-gray-700 mb-2">代理人とアプリで繋がろう</p>
           <p className="text-xs text-gray-500 leading-relaxed mb-3">
             もしもの時には代理人にメールが届きますが、相手もアプリをインストールしている場合はメール＋アプリ通知でWの安心。ペット日記を見せ合えたり、より詳細な引き継ぎデータをわかりやすく閲覧できます。
