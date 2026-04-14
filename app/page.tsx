@@ -182,7 +182,7 @@ export default function HomePage() {
 
           {/* めくった後のページ */}
           {done && (
-            <div className="relative z-10" style={{ backgroundColor: '#FFFEF9' }}>
+  <div className="relative z-10" style={{ backgroundColor: '#FFFEF9', minHeight: '480px' }}>
               <div className="flex flex-col items-center px-6 pt-10 pb-10 gap-5">
 
                 {/* チェックマーク */}
