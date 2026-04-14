@@ -15,6 +15,35 @@ const toLocalDateString = () => {
   return `${y}-${m}-${d}`
 }
 
+const formatDateTime = (isoString: string) => {
+  const d = new Date(isoString)
+  const m = d.getMonth() + 1
+  const day = d.getDate()
+  const h = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  return `${m}月${day}日 ${h}:${min}`
+}
+
+const formatDeadline = (isoString: string, alertHours: number) => {
+  const d = new Date(new Date(isoString).getTime() + alertHours * 60 * 60 * 1000)
+  const m = d.getMonth() + 1
+  const day = d.getDate()
+  const h = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  return `${m}月${day}日 ${h}:${min}`
+}
+
+const calcRemaining = (isoString: string, alertHours: number) => {
+  const deadline = new Date(new Date(isoString).getTime() + alertHours * 60 * 60 * 1000)
+  const diff = deadline.getTime() - Date.now()
+  if (diff <= 0) return null
+  const totalMin = Math.floor(diff / 60000)
+  const h = Math.floor(totalMin / 60)
+  const min = totalMin % 60
+  if (h > 0) return `残り${h}時間${min}分`
+  return `残り${min}分`
+}
+
 const WEEKDAYS_JP = ['日', '月', '火', '水', '木', '金', '土']
 const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -22,13 +51,16 @@ const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'
 export default function HomePage() {
   const { user } = useAuth()
   const router = useRouter()
-  const [randomImage, setRandomImage] = useState<string | null>(null)
   const [partnerName, setPartnerName] = useState<string | null>(null)
+  const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null)
+  const [alertHours, setAlertHours] = useState<number>(24)
+  const [checkinTime, setCheckinTime] = useState<string | null>(null) // 直前のチェックイン時刻
 
   const [swipeY, setSwipeY] = useState(0)
   const [swiping, setSwiping] = useState(false)
   const [peeled, setPeeled] = useState(false)
   const [done, setDone] = useState(false)
+  const [remaining, setRemaining] = useState<string | null>(null)
   const startYRef = useRef<number | null>(null)
 
   const today = new Date()
@@ -39,44 +71,41 @@ export default function HomePage() {
   useEffect(() => {
     if (!user) return
     const fetchData = async () => {
-      const todayStr = toLocalDateString()
-      const { data: recordsData } = await supabase
-        .from('pet_records')
-        .select('image_url')
-        .eq('user_id', user.id)
-        .eq('date', todayStr)
-      const images = (recordsData ?? []).map((r: any) => r.image_url).filter(Boolean) as string[]
-      if (images.length > 0) {
-        setRandomImage(images[Math.floor(Math.random() * images.length)])
-      } else {
-        const { data: pastRecords } = await supabase
-          .from('pet_records')
-          .select('image_url')
-          .eq('user_id', user.id)
-          .not('image_url', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(20)
-        const pastImages = (pastRecords ?? []).map((r: any) => r.image_url).filter(Boolean) as string[]
-        if (pastImages.length > 0) setRandomImage(pastImages[Math.floor(Math.random() * pastImages.length)])
-      }
-
       const { data: moshimoData } = await supabase
         .from('moshimo_info')
-        .select('proxy_user_id, proxy_approved_at, proxy_name')
+        .select('proxy_user_id, proxy_approved_at, proxy_name, last_checked_at, alert_hours')
         .eq('user_id', user.id)
         .single()
       if (moshimoData?.proxy_user_id && moshimoData?.proxy_approved_at) {
         setPartnerName(moshimoData.proxy_name ?? 'パートナー')
       }
+      if (moshimoData?.last_checked_at) {
+        setLastCheckedAt(moshimoData.last_checked_at)
+      }
+      if (moshimoData?.alert_hours) {
+        setAlertHours(moshimoData.alert_hours)
+      }
     }
     fetchData()
   }, [user])
 
+  // 残り時間を1分ごとに更新
+  useEffect(() => {
+    if (!lastCheckedAt) return
+    const update = () => setRemaining(calcRemaining(lastCheckedAt, alertHours))
+    update()
+    const timer = setInterval(update, 60000)
+    return () => clearInterval(timer)
+  }, [lastCheckedAt, alertHours])
+
   const triggerCheckin = async () => {
+    const now = new Date().toISOString()
     if (user) {
       await supabase.from('moshimo_info')
-        .update({ last_checked_at: new Date().toISOString() })
+        .update({ last_checked_at: now })
         .eq('user_id', user.id)
+      setCheckinTime(now)
+      setLastCheckedAt(now)
     }
   }
 
@@ -107,11 +136,6 @@ export default function HomePage() {
   }
   const onMouseUp = () => handleSwipeEnd()
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    window.location.href = '/auth'
-  }
-
   const cardTransform = peeled
     ? 'translateY(110%) rotate(3deg)'
     : `translateY(${swipeY}px) rotate(${swipeY * 0.01}deg)`
@@ -134,12 +158,11 @@ export default function HomePage() {
       {/* カレンダー本体 */}
       <div className="px-8">
 
-        {/* 木枠（固定・動かない） */}
+        {/* 木枠 */}
         <div className="relative rounded-t-2xl" style={{ backgroundColor: '#C8A96E' }}>
           <div className="flex justify-center pt-2 pb-1">
             <div style={{
-              width: '40px',
-              height: '22px',
+              width: '40px', height: '22px',
               borderRadius: '20px 20px 0 0',
               border: '3px solid #A0845C',
               borderBottom: 'none',
@@ -152,63 +175,45 @@ export default function HomePage() {
         {/* カードエリア */}
         <div className="relative" style={{ minHeight: '480px' }}>
 
-          {/* 後ろのページ3枚（右・下だけにずらす） */}
+          {/* 後ろのページ3枚 */}
           <div className="absolute top-3 bottom-0" style={{ backgroundColor: '#ccc5b8', zIndex: 0, left: 0, right: '-8px' }} />
           <div className="absolute top-1.5 bottom-0" style={{ backgroundColor: '#ddd8ce', zIndex: 1, left: 0, right: '-4px' }} />
           <div className="absolute inset-0" style={{ backgroundColor: '#edeae4', zIndex: 2 }} />
 
           {/* めくった後のページ */}
           {done && (
-            <div className="relative z-10" style={{ backgroundColor: '#FFFEF9', overflow: 'hidden' }}>
-              <div className="flex flex-col items-center px-6 pt-8 pb-24 gap-4">
-                <div className="relative w-44 h-44">
-                  <svg viewBox="0 0 24 24" className="absolute -top-3 -left-1 w-8 h-8" fill="#FFB7C5">
-                    <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
-                    <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
-                    <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
-                    <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
+            <div className="relative z-10" style={{ backgroundColor: '#FFFEF9' }}>
+              <div className="flex flex-col items-center px-6 pt-10 pb-10 gap-5">
+
+                {/* チェックマーク */}
+                <div className="flex items-center justify-center w-16 h-16 rounded-full" style={{ backgroundColor: '#FFF0F3' }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8">
+                    <polyline points="20 6 9 17 4 12" />
                   </svg>
-                  <svg viewBox="0 0 24 24" className="absolute -top-2 -right-2 w-7 h-7" fill="#FBBF24">
-                    <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
-                    <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
-                    <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
-                    <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
-                  </svg>
-                  <svg viewBox="0 0 24 24" className="absolute -bottom-2 -left-2 w-7 h-7" fill="#86EFAC">
-                    <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
-                    <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
-                    <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
-                    <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
-                  </svg>
-                  <svg viewBox="0 0 24 24" className="absolute -bottom-3 -right-1 w-8 h-8" fill="#FFB7C5">
-                    <circle cx="12" cy="12" r="6"/><circle cx="12" cy="3" r="2.5"/><circle cx="12" cy="21" r="2.5"/>
-                    <circle cx="3" cy="12" r="2.5"/><circle cx="21" cy="12" r="2.5"/>
-                    <circle cx="5.5" cy="5.5" r="2"/><circle cx="18.5" cy="5.5" r="2"/>
-                    <circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>
-                  </svg>
-                  <div className="w-44 h-44 rounded-full overflow-hidden border-4 border-white shadow-md">
-                    {randomImage ? (
-                      <img src={randomImage} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-pink-50 flex items-center justify-center">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={1.5} className="w-16 h-16">
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                      </div>
-                    )}
-                  </div>
                 </div>
-                <p className="text-base font-bold text-gray-700">今日も一緒にいるね！</p>
-                <div className="relative flex items-center justify-center">
-                  <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderRight: '12px solid #FFB7C5' }} />
-                  <div className="bg-[#FFB7C5] px-4 py-1">
-                    <span className="text-white text-xs font-medium">今日のうちの子：オキ家のおこめちゃん</span>
-                  </div>
-                  <div style={{ width: 0, height: 0, borderTop: '14px solid transparent', borderBottom: '14px solid transparent', borderLeft: '12px solid #FFB7C5' }} />
+
+                {/* 確認時刻メッセージ */}
+                <div className="w-full text-center">
+                  <p className="text-base font-bold text-gray-700 leading-relaxed">
+                    {checkinTime ? formatDateTime(checkinTime) : ''}に確認しました！
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                    次は
+                    <span className="font-bold text-gray-700 mx-1">
+                      {checkinTime ? formatDeadline(checkinTime, alertHours) : ''}まで
+                    </span>
+                    にまた来てください。
+                  </p>
                 </div>
+
+                {/* 区切り */}
+                <div className="w-full border-t border-gray-100" />
+
+                {/* 記録ボタン */}
                 <button
                   onClick={() => router.push('/record')}
-                  className="w-full bg-[#FFB7C5] text-white font-bold py-3 rounded-2xl text-sm"
+                  className="w-full text-white font-bold py-3 rounded-2xl text-sm"
+                  style={{ backgroundColor: '#FFB7C5' }}
                 >
                   ペットの記録もつける
                 </button>
@@ -217,7 +222,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* スワイプカード（紙のみ） */}
+          {/* スワイプカード */}
           {!done && (
             <div
               className="relative z-10"
@@ -250,6 +255,24 @@ export default function HomePage() {
                 {/* 区切り線 */}
                 <div className="mx-5 border-t border-gray-100" />
 
+                {/* 最終確認時刻・残り時間 */}
+                {lastCheckedAt && (
+                  <div className="mx-5 mt-3 px-3 py-2 rounded-xl" style={{ backgroundColor: '#FFF0F3' }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 flex-shrink-0">
+                          <circle cx="12" cy="12" r="10"/>
+                          <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span className="text-xs text-gray-500">最終確認：{formatDateTime(lastCheckedAt)}</span>
+                      </div>
+                      {remaining && (
+                        <span className="text-xs font-bold" style={{ color: '#FFB7C5' }}>{remaining}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* 今日もめくって記録しよう */}
                 <p className="text-center text-sm font-bold pt-3" style={{ color: '#555' }}>今日もめくって記録しよう</p>
 
@@ -269,7 +292,7 @@ export default function HomePage() {
                     </svg>
                   </div>
 
-                  {/* 右下の折り目（裏は白） */}
+                  {/* 右下の折り目 */}
                   <div className="absolute bottom-0 right-0 w-10 h-10">
                     <div style={{
                       position: 'absolute', bottom: 0, right: 0,
