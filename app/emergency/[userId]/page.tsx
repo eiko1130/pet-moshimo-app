@@ -62,7 +62,17 @@ function EmergencyContacts({ userId }: { userId: string }) {
       .then(({ data }) => setContacts(data ?? []))
   }, [userId])
   if (contacts.length === 0) {
-    return <p className="text-sm text-gray-400">未登録</p>
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-sm text-gray-700 font-medium">田中一郎</span>
+            <span className="text-xs text-gray-400 ml-1">（父）</span>
+          </div>
+          <a href="tel:090-1111-2222" className="text-green-600 text-xs font-medium">090-1111-2222</a>
+        </div>
+      </div>
+    )
   }
   return (
     <div className="space-y-2">
@@ -75,9 +85,7 @@ function EmergencyContacts({ userId }: { userId: string }) {
             )}
           </div>
           {c.phone && (
-            <a href={'tel:' + c.phone} className="text-green-600 text-xs font-medium">
-              {c.phone}
-            </a>
+            <a href={'tel:' + c.phone} className="text-green-600 text-xs font-medium">{c.phone}</a>
           )}
         </div>
       ))}
@@ -112,21 +120,18 @@ export default function EmergencyPage() {
           setHoursElapsed(Math.floor(diff))
         }
       }
-
       const { data: profileData } = await supabase
         .from('profiles')
         .select('avatar_url')
         .eq('id', userId)
         .single()
       if (profileData?.avatar_url) setOwnerAvatar(profileData.avatar_url)
-
       const { data: petsData } = await supabase
         .from('my_pets')
         .select('id, name, species, image_url, birth_month, birth_day')
         .eq('user_id', userId)
         .order('created_at')
       setPets(petsData ?? [])
-
       const since = new Date()
       since.setDate(since.getDate() - 7)
       const sinceStr = since.toISOString().slice(0, 10)
@@ -150,7 +155,13 @@ export default function EmergencyPage() {
     )
   }
 
-  const ownerName = owner?.full_name ? owner.full_name + 'さん' : 'この方'
+  const ownerName = owner?.full_name ? owner.full_name + 'さん' : '田中花子さん'
+  const ownerFullName = owner?.full_name || '田中花子'
+  const ownerPhone = owner?.proxy_phone || '090-0000-0000'
+  const ownerAddress = owner?.address || '東京都渋谷区神南1-2-3 渋谷ハイツ201'
+  const ownerKeyLocation = owner?.key_location || '玄関ドア横の植木鉢の下'
+  const ownerHospital = owner?.hospital_name || '渋谷どうぶつ病院'
+  const ownerHospitalPhone = owner?.hospital_phone || '03-1234-5678'
 
   if (resolved) {
     return (
@@ -162,11 +173,7 @@ export default function EmergencyPage() {
         </div>
         <p className="text-base font-bold text-gray-700 text-center">確認ありがとうございました！</p>
         <p className="text-sm text-gray-500 text-center leading-relaxed">緊急モードを解除しました。{ownerName}の無事が確認できてよかったです。</p>
-        <button
-          onClick={() => router.push('/')}
-          className="w-full text-white font-bold py-4 rounded-2xl text-base"
-          style={{ backgroundColor: '#FFB7C5' }}
-        >
+        <button onClick={() => router.push('/')} className="w-full text-white font-bold py-4 rounded-2xl text-base" style={{ backgroundColor: '#FFB7C5' }}>
           ホームに戻る
         </button>
       </div>
@@ -184,7 +191,6 @@ export default function EmergencyPage() {
           </svg>
           <span className="text-xs font-medium opacity-90">緊急確認モード</span>
         </div>
-
         <div className="flex flex-col items-center gap-2 mb-3">
           <div className="w-16 h-16 rounded-full overflow-hidden bg-white/30 flex items-center justify-center">
             {ownerAvatar ? (
@@ -199,7 +205,6 @@ export default function EmergencyPage() {
           <p className="text-lg font-bold">{ownerName}</p>
           <p className="text-xs opacity-80">最終確認から{hoursElapsed}時間以上経過しています</p>
         </div>
-
         <div className="flex items-center gap-1">
           {([1, 2, 3, 4] as Step[]).map((s) => (
             <div key={s} className="flex items-center gap-1">
@@ -213,10 +218,7 @@ export default function EmergencyPage() {
                 {s}
               </div>
               {s < 4 && (
-                <div
-                  className="w-6 h-0.5"
-                  style={{ backgroundColor: step > s ? 'white' : 'rgba(255,255,255,0.3)' }}
-                />
+                <div className="w-6 h-0.5" style={{ backgroundColor: step > s ? 'white' : 'rgba(255,255,255,0.3)' }} />
               )}
             </div>
           ))}
@@ -256,11 +258,7 @@ export default function EmergencyPage() {
                 </div>
               ))}
             </div>
-            <button
-              onClick={() => setStep(2)}
-              className="w-full text-white font-bold py-4 rounded-2xl text-base"
-              style={{ backgroundColor: '#FF8FA3' }}
-            >
+            <button onClick={() => setStep(2)} className="w-full text-white font-bold py-4 rounded-2xl text-base" style={{ backgroundColor: '#FF8FA3' }}>
               確認を開始する
             </button>
           </div>
@@ -271,38 +269,23 @@ export default function EmergencyPage() {
             <div className="bg-white border border-gray-100 rounded-2xl p-5">
               <p className="text-sm font-bold text-gray-700 mb-1">まず連絡を試みてください</p>
               <p className="text-xs text-gray-400 mb-4">電話・メッセージで安否を確認してください</p>
-              {owner?.proxy_phone ? (
-                
-                <a  href={'tel:' + owner.proxy_phone}
-                  className="flex items-center gap-3 w-full bg-green-50 border border-green-100 rounded-xl px-4 py-3"
-                >
-                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400">電話をかける</p>
-                    <p className="text-sm font-bold text-green-600">{owner.proxy_phone}</p>
-                  </div>
-                </a>
-              ) : (
-                <div className="bg-gray-50 rounded-xl px-4 py-3">
-                  <p className="text-sm text-gray-400">電話番号が登録されていません</p>
+              <a href={'tel:' + ownerPhone} className="flex items-center gap-3 w-full bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
                 </div>
-              )}
+                <div>
+                  <p className="text-xs text-gray-400">電話をかける</p>
+                  <p className="text-sm font-bold text-green-600">{ownerPhone}</p>
+                </div>
+              </a>
             </div>
             <div className="space-y-3">
-              <button
-                onClick={() => setStep(3)}
-                className="w-full bg-red-50 border border-red-100 text-red-500 font-bold py-4 rounded-2xl text-sm"
-              >
+              <button onClick={() => setStep(3)} className="w-full bg-red-50 border border-red-100 text-red-500 font-bold py-4 rounded-2xl text-sm">
                 連絡が取れなかった
               </button>
-              <button
-                onClick={() => setResolved(true)}
-                className="w-full bg-green-50 border border-green-100 text-green-600 font-bold py-4 rounded-2xl text-sm"
-              >
+              <button onClick={() => setResolved(true)} className="w-full bg-green-50 border border-green-100 text-green-600 font-bold py-4 rounded-2xl text-sm">
                 連絡が取れた・無事を確認できた
               </button>
             </div>
@@ -317,56 +300,35 @@ export default function EmergencyPage() {
             <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-50">
                 <p className="text-xs font-bold text-gray-400 mb-1">氏名</p>
-                <p className="text-sm text-gray-700">{owner?.full_name || '未登録'}</p>
+                <p className="text-sm text-gray-700">{ownerFullName}</p>
               </div>
               <div className="px-4 py-3 border-b border-gray-50">
                 <p className="text-xs font-bold text-gray-400 mb-1">住所</p>
-                {owner?.address ? (
-                  
-                   <a href={'https://maps.google.com/?q=' + encodeURIComponent(owner.address)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between"
-                  >
-                    <p className="text-sm text-gray-700 leading-relaxed">{owner.address}</p>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-shrink-0 ml-2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                  </a>
-                ) : (
-                  <p className="text-sm text-gray-400">未登録</p>
-                )}
+                <a href={'https://maps.google.com/?q=' + encodeURIComponent(ownerAddress)} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between">
+                  <p className="text-sm text-gray-700 leading-relaxed">{ownerAddress}</p>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#FFB7C5" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 flex-shrink-0 ml-2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                </a>
               </div>
               <div className="px-4 py-3 border-b border-gray-50">
                 <p className="text-xs font-bold text-gray-400 mb-1">鍵の場所</p>
-                <p className="text-sm text-gray-700 leading-relaxed">{owner?.key_location || '未登録'}</p>
+                <p className="text-sm text-gray-700 leading-relaxed">{ownerKeyLocation}</p>
               </div>
               <div className="px-4 py-3 border-b border-gray-50">
                 <p className="text-xs font-bold text-gray-400 mb-1">かかりつけ動物病院</p>
-                {owner?.hospital_name ? (
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-700">{owner.hospital_name}</p>
-                    {owner.hospital_phone && (
-                      <a href={'tel:' + owner.hospital_phone} className="text-green-600 text-xs font-medium">
-                        {owner.hospital_phone}
-                      </a>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-400">未登録</p>
-                )}
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-700">{ownerHospital}</p>
+                  <a href={'tel:' + ownerHospitalPhone} className="text-green-600 text-xs font-medium">{ownerHospitalPhone}</a>
+                </div>
               </div>
               <div className="px-4 py-3">
                 <p className="text-xs font-bold text-gray-400 mb-2">緊急連絡先</p>
                 <EmergencyContacts userId={userId} />
               </div>
             </div>
-            <button
-              onClick={() => setStep(4)}
-              className="w-full text-white font-bold py-4 rounded-2xl text-base"
-              style={{ backgroundColor: '#FF8FA3' }}
-            >
+            <button onClick={() => setStep(4)} className="w-full text-white font-bold py-4 rounded-2xl text-base" style={{ backgroundColor: '#FF8FA3' }}>
               ペットの状態を確認する
             </button>
           </div>
@@ -374,9 +336,7 @@ export default function EmergencyPage() {
 
         {step === 4 && (
           <div className="space-y-4">
-            <p className="text-sm font-bold text-gray-700">
-              {ownerName}と暮らしているペットとその近況
-            </p>
+            <p className="text-sm font-bold text-gray-700">{ownerName}と暮らしているペットとその近況</p>
             {pets.length === 0 ? (
               <div className="bg-white border border-gray-100 rounded-2xl p-5 text-center">
                 <p className="text-sm text-gray-400">ペット情報が登録されていません</p>
@@ -417,30 +377,16 @@ export default function EmergencyPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs font-bold text-gray-600">
-                                  {record.date.slice(5).replace('-', '/')}
-                                </span>
+                                <span className="text-xs font-bold text-gray-600">{record.date.slice(5).replace('-', '/')}</span>
                                 <span className="text-xs text-gray-400">{MOOD_LABEL[record.mood]}</span>
-                                {record.no_appetite && (
-                                  <span className="text-xs bg-red-50 text-red-400 px-1.5 py-0.5 rounded-full">食欲なし</span>
-                                )}
-                                {record.vomit && (
-                                  <span className="text-xs bg-red-50 text-red-400 px-1.5 py-0.5 rounded-full">嘔吐</span>
-                                )}
-                                {record.abnormal_excretion && (
-                                  <span className="text-xs bg-red-50 text-red-400 px-1.5 py-0.5 rounded-full">排泄異常</span>
-                                )}
+                                {record.no_appetite && <span className="text-xs bg-red-50 text-red-400 px-1.5 py-0.5 rounded-full">食欲なし</span>}
+                                {record.vomit && <span className="text-xs bg-red-50 text-red-400 px-1.5 py-0.5 rounded-full">嘔吐</span>}
+                                {record.abnormal_excretion && <span className="text-xs bg-red-50 text-red-400 px-1.5 py-0.5 rounded-full">排泄異常</span>}
                               </div>
-                              {record.memo && (
-                                <p className="text-xs text-gray-500 mt-0.5 truncate">{record.memo}</p>
-                              )}
-                              {record.weight && (
-                                <p className="text-xs text-gray-400 mt-0.5">体重 {record.weight}kg</p>
-                              )}
+                              {record.memo && <p className="text-xs text-gray-500 mt-0.5 truncate">{record.memo}</p>}
+                              {record.weight && <p className="text-xs text-gray-400 mt-0.5">体重 {record.weight}kg</p>}
                             </div>
-                            {record.image_url && (
-                              <img src={record.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                            )}
+                            {record.image_url && <img src={record.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />}
                           </div>
                         ))}
                       </div>
@@ -450,9 +396,7 @@ export default function EmergencyPage() {
               ))
             )}
             <div className="bg-pink-50 border border-pink-100 rounded-2xl p-4 text-center">
-              <p className="text-sm text-gray-600 leading-relaxed">
-                ペットの安全を確認したら、できるだけ早く保護してください。
-              </p>
+              <p className="text-sm text-gray-600 leading-relaxed">ペットの安全を確認したら、できるだけ早く保護してください。</p>
             </div>
           </div>
         )}
