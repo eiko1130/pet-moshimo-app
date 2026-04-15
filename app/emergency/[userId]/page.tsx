@@ -227,7 +227,7 @@ export default function EmergencyPage() {
               <p className="text-xs text-gray-400 mb-4">電話・メッセージで安否を確認してください</p>
               {owner?.proxy_phone ? (
                 
-                  href={'tel:' + owner.proxy_phone}
+                <a href={'tel:' + owner.proxy_phone}
                   className="flex items-center gap-3 w-full bg-green-50 border border-green-100 rounded-xl px-4 py-3"
                 >
                   <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
@@ -273,7 +273,7 @@ export default function EmergencyPage() {
                 <p className="text-xs font-bold text-gray-400 mb-1">住所</p>
                 {owner?.address ? (
                   
-                    href={'https://maps.google.com/?q=' + encodeURIComponent(owner.address)}
+                  <a href={'https://maps.google.com/?q=' + encodeURIComponent(owner.address)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-between"
