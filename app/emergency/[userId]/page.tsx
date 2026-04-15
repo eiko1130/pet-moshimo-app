@@ -90,10 +90,12 @@ export default function EmergencyPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [owner, setOwner] = useState<OwnerInfo | null>(null)
+  const [ownerAvatar, setOwnerAvatar] = useState<string | null>(null)
   const [pets, setPets] = useState<Pet[]>([])
   const [records, setRecords] = useState<PetRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [hoursElapsed, setHoursElapsed] = useState<number>(0)
+  const [hoursElapsed, setHoursElapsed] = useState<number>(48)
+  const [resolved, setResolved] = useState(false)
 
   useEffect(() => {
     if (!userId) return
@@ -110,12 +112,21 @@ export default function EmergencyPage() {
           setHoursElapsed(Math.floor(diff))
         }
       }
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', userId)
+        .single()
+      if (profileData?.avatar_url) setOwnerAvatar(profileData.avatar_url)
+
       const { data: petsData } = await supabase
         .from('my_pets')
         .select('id, name, species, image_url, birth_month, birth_day')
         .eq('user_id', userId)
         .order('created_at')
       setPets(petsData ?? [])
+
       const since = new Date()
       since.setDate(since.getDate() - 7)
       const sinceStr = since.toISOString().slice(0, 10)
@@ -141,10 +152,31 @@ export default function EmergencyPage() {
 
   const ownerName = owner?.full_name ? owner.full_name + 'さん' : 'この方'
 
+  if (resolved) {
+    return (
+      <div className="min-h-screen bg-[#FFFBFC] flex flex-col items-center justify-center px-8 gap-5">
+        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <p className="text-base font-bold text-gray-700 text-center">確認ありがとうございました！</p>
+        <p className="text-sm text-gray-500 text-center leading-relaxed">緊急モードを解除しました。{ownerName}の無事が確認できてよかったです。</p>
+        <button
+          onClick={() => router.push('/')}
+          className="w-full text-white font-bold py-4 rounded-2xl text-base"
+          style={{ backgroundColor: '#FFB7C5' }}
+        >
+          ホームに戻る
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#FFFBFC]">
       <header className="bg-[#FF8FA3] text-white px-5 pt-10 pb-4">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-3">
           <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
             <line x1="12" y1="9" x2="12" y2="13" />
@@ -152,9 +184,23 @@ export default function EmergencyPage() {
           </svg>
           <span className="text-xs font-medium opacity-90">緊急確認モード</span>
         </div>
-        <p className="text-lg font-bold">{ownerName}の安否確認</p>
-        <p className="text-xs opacity-80 mt-0.5">最終確認から{hoursElapsed}時間以上経過しています</p>
-        <div className="flex items-center gap-1 mt-4">
+
+        <div className="flex flex-col items-center gap-2 mb-3">
+          <div className="w-16 h-16 rounded-full overflow-hidden bg-white/30 flex items-center justify-center">
+            {ownerAvatar ? (
+              <img src={ownerAvatar} alt={ownerName} className="w-full h-full object-cover" />
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={1.5} className="w-8 h-8">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            )}
+          </div>
+          <p className="text-lg font-bold">{ownerName}</p>
+          <p className="text-xs opacity-80">最終確認から{hoursElapsed}時間以上経過しています</p>
+        </div>
+
+        <div className="flex items-center gap-1">
           {([1, 2, 3, 4] as Step[]).map((s) => (
             <div key={s} className="flex items-center gap-1">
               <div
@@ -227,7 +273,7 @@ export default function EmergencyPage() {
               <p className="text-xs text-gray-400 mb-4">電話・メッセージで安否を確認してください</p>
               {owner?.proxy_phone ? (
                 
-                <a href={'tel:' + owner.proxy_phone}
+                <a  href={'tel:' + owner.proxy_phone}
                   className="flex items-center gap-3 w-full bg-green-50 border border-green-100 rounded-xl px-4 py-3"
                 >
                   <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
@@ -236,8 +282,8 @@ export default function EmergencyPage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-700">{owner.full_name || '飼い主'}</p>
-                    <p className="text-sm text-green-600 font-medium">{owner.proxy_phone}</p>
+                    <p className="text-xs text-gray-400">電話をかける</p>
+                    <p className="text-sm font-bold text-green-600">{owner.proxy_phone}</p>
                   </div>
                 </a>
               ) : (
@@ -254,7 +300,7 @@ export default function EmergencyPage() {
                 連絡が取れなかった
               </button>
               <button
-                onClick={() => router.push('/')}
+                onClick={() => setResolved(true)}
                 className="w-full bg-green-50 border border-green-100 text-green-600 font-bold py-4 rounded-2xl text-sm"
               >
                 連絡が取れた・無事を確認できた
@@ -270,10 +316,14 @@ export default function EmergencyPage() {
             </div>
             <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-50">
+                <p className="text-xs font-bold text-gray-400 mb-1">氏名</p>
+                <p className="text-sm text-gray-700">{owner?.full_name || '未登録'}</p>
+              </div>
+              <div className="px-4 py-3 border-b border-gray-50">
                 <p className="text-xs font-bold text-gray-400 mb-1">住所</p>
                 {owner?.address ? (
                   
-                  <a href={'https://maps.google.com/?q=' + encodeURIComponent(owner.address)}
+                   <a href={'https://maps.google.com/?q=' + encodeURIComponent(owner.address)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-between"
@@ -290,9 +340,7 @@ export default function EmergencyPage() {
               </div>
               <div className="px-4 py-3 border-b border-gray-50">
                 <p className="text-xs font-bold text-gray-400 mb-1">鍵の場所</p>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {owner?.key_location || '未登録'}
-                </p>
+                <p className="text-sm text-gray-700 leading-relaxed">{owner?.key_location || '未登録'}</p>
               </div>
               <div className="px-4 py-3 border-b border-gray-50">
                 <p className="text-xs font-bold text-gray-400 mb-1">かかりつけ動物病院</p>
@@ -326,6 +374,9 @@ export default function EmergencyPage() {
 
         {step === 4 && (
           <div className="space-y-4">
+            <p className="text-sm font-bold text-gray-700">
+              {ownerName}と暮らしているペットとその近況
+            </p>
             {pets.length === 0 ? (
               <div className="bg-white border border-gray-100 rounded-2xl p-5 text-center">
                 <p className="text-sm text-gray-400">ペット情報が登録されていません</p>
